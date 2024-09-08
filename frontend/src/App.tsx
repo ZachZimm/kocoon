@@ -19,7 +19,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { ChartDisplay } from './components/chart-display'
+import { CashFlowChartDisplay } from './components/cash-flow-chart-display'
+import { BalanceSheetChartDisplay } from './components/balance-sheet-chart-display'
+import { IncomeChartDisplay } from './components/income-chart-display'
 import { text } from 'stream/consumers'
 import ModeToggle from './components/ui/mode-toggle'
 
@@ -79,12 +81,12 @@ function App() {
         </div>
       </ResizablePanel>
         <ResizableHandle withHandle/>
-        <ResizablePanel defaultSize={50} className='w-full'>
+        <ResizablePanel defaultSize={67} className='w-full'>
           { /* Secondary panel
                 This will probably contain charts or something,
                 but it will likely end up in a seperate component too */ }
           <div className='flex-auto w-full h-full items-center justify-center p-6'>
-            <h2 className='font-semibold justify-self-center pb-4'>Some Buttons, and a chart</h2>
+            <h2 className='font-semibold justify-self-center pb-4'>Some buttons and charts</h2>
             {/* These buttons just show how convinient shadcn is,
                   especially how they change with the selected theme*/}
             <Button variant="default">Primary</Button>
@@ -97,7 +99,11 @@ function App() {
               <ModeToggle />
             </div>
             <br />
-            <ChartDisplay />
+            <ScrollArea className='w-full h-full'>
+              <CashFlowChartDisplay />
+              <IncomeChartDisplay />
+              <BalanceSheetChartDisplay />
+            </ ScrollArea>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

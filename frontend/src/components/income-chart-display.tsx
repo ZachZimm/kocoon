@@ -20,7 +20,7 @@ import {
 export const description = "An interactive line chart"
 
 async function fetchFinancialData(symbol: string) {
-    const response = await fetch(`https://host.zzimm.com/api/cash_flow/q/${symbol}`)
+    const response = await fetch(`https://host.zzimm.com/api/income/q/${symbol}`)
     const data = await response.json()
     console.log(data)
     return data
@@ -30,44 +30,35 @@ const chartConfig = {
   views: {
     label: "$",
   },
-  NetIncome: {
-    label: "Net Income",
+  EBITDA: {
+    label: "EBITDA",
     color: "hsl(var(--chart-1))",
   },
-  OperatingCashFlow: {
-    label: "Operating Cash Flow",
+  TotalRevenue: {
+    label: "Total Revenue",
     color: "hsl(var(--chart-2))",
   },
-  CapitalExpenditure: {
-    label: "Capital Expenditure",
+  BasicEPS: {
+    label: "Earnigns Per Share",
     color: "hsl(var(--chart-3))",
   },
 } satisfies ChartConfig
 
-export function ChartDisplay() {
+export function IncomeChartDisplay() {
   const [chartData, setChartData] = React.useState([])
   const [loading, setLoading] = React.useState(true)
-  const symbol = "AAPL"
+  const symbol = "AMD"
   const [activeChart, setActiveChart] =
-    React.useState<keyof typeof chartConfig>("NetIncome")
-
-  const total = React.useMemo(
-    () => ({
-    NetIncome: chartData.reduce((acc, curr) => acc + curr.NetIncome, 0),
-    OperatingCashFlow: chartData.reduce((acc, curr) => acc + curr.OperatingCashFlow, 0),
-    CapitalExpenditure: chartData.reduce((acc, curr) => acc + curr.CapitalExpenditure, 0),
-    }),
-    []
-  )
+    React.useState<keyof typeof chartConfig>("EBITDA")
 
   React.useEffect(() => {
     fetchFinancialData(symbol).then((data) => {
       // Process the data to extract the necessary information for charting
       const formattedData = data.map((item: any) => ({
         date: item.asOfDate,
-        NetIncome: parseFloat(item.NetIncome),
-        OperatingCashFlow: parseFloat(item.OperatingCashFlow),
-        CapitalExpenditure: parseFloat(item.CapitalExpenditure),
+        EBITDA: parseFloat(item.EBITDA),
+        TotalRevenue: parseFloat(item.TotalRevenue),
+        BasicEPS: parseFloat(item.BasicEPS),
       }))
       setChartData(formattedData)
       setLoading(false)
@@ -79,11 +70,11 @@ export function ChartDisplay() {
       <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
         <div className="flex flex-1 flex-col justify-center gap-1 px-2 py-2 sm:py-2">
           <CardDescription>
-            Showing historical financial data for {symbol} 
+            Historical income data for {symbol} 
           </CardDescription>
         </div>
         <div className="flex">
-          {["NetIncome", "OperatingCashFlow", "CapitalExpenditure"].map((key) => {
+          {["EBITDA", "TotalRevenue", "BasicEPS"].map((key) => {
             const chart = key as keyof typeof chartConfig
             return (
                 <button
@@ -152,7 +143,7 @@ export function ChartDisplay() {
             />
           </LineChart>
         </ChartContainer>
-        <span className="font-semibold">{chartConfig[activeChart].label}</span>
+        <span className="font-semibold">{symbol} - {chartConfig[activeChart].label}</span>
       </CardContent>
     </Card>
   )
