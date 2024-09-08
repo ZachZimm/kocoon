@@ -52,12 +52,13 @@ function App() {
             <ResizablePanel className='w-full'>
               {/* Chat Panel */}
               <ChatDisplay />
+
           </ResizablePanel>
             <ResizableHandle withHandle/>
             <ResizablePanel defaultSize={67} className='w-full'>
               {/* Secondary panel */}
-              <div className="flex flex-col h-full justify-items-center p-6">
-                <h2 className='font-semibold justify-self-center pb-4'>Some buttons and charts</h2>
+              <div className="flex flex-col h-full justify-items-center p-6 bg-accent">
+                <h2 className='font-semibold justify-self-center pb-4 text-accent-foreground'>Some buttons and charts</h2>
                 {/* These buttons don't do anything other than show how convinient shadcn is,
                       especially how they change with the selected theme*/}
                 <ScrollArea className='flex-1'>

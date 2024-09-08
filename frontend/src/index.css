@@ -125,6 +125,50 @@ button:focus-visible {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+  /* 204 49% 37% Lapis Lazuli */
+  /* 48 80% 85% Cosmic Latte */
+  /* 210 50% 24% Prussian Blue*/
+  /* 212 18% 35% Payne's Gray */
+  /* 210 21% 40% Payne's (other?) Gray */
+  .tsunami {
+    --background: 210 50% 24%;
+    --foreground: 48 60% 94%;
+
+    --card: 204 49% 37%;
+    --card-foreground: 48 60% 94%;
+    /* --card: 48 80% 85%; */
+    /* --card-foreground: 212 21% 40%; */
+
+    --popover: 204 49% 37%;
+    --popover-foreground: 48 60% 94%;
+
+    --primary: 204 49% 37%;
+    --primary-foreground: 60 9.1% 97.8%;
+
+    --secondary: 204 49% 37%;
+    --secondary-foreground: 60 9.1% 97.8%;
+
+    --muted: 204 49% 20%;
+    --muted-foreground: 48 30% 85%;
+
+    --accent: 48 80% 85%;
+    --accent-foreground: 204 49% 37%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 60 9.1% 97.8%;
+
+    --border: 210 50% 7%;
+    --input: 210 50% 7%;
+    --ring: 212 21% 40%;
+    --tertiary: 212 40% 40%;
+
+    --chart-1: 48 80% 85%;
+    --chart-2: 27 87% 67%;
+    --chart-3: 12 76% 61%;
+    /* These should be changed, but they have no use at the moment*/
+    --chart-4: 30 80% 55%; /* This one might be okay */
+    --chart-5: 340 75% 55%;
+  }
 }
 
 @layer base {
