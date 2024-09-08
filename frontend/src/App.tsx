@@ -3,7 +3,6 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
@@ -11,42 +10,24 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { CashFlowChartDisplay } from './components/cash-flow-chart-display'
 import { BalanceSheetChartDisplay } from './components/balance-sheet-chart-display'
 import { IncomeChartDisplay } from './components/income-chart-display'
-import { text } from 'stream/consumers'
+import { ChatDisplay } from './components/chat-display'
 import ModeToggle from './components/ui/mode-toggle'
+import { text } from 'stream/consumers'
 
+// TODO:
+// FinancialsDisplay
+// Add an input for the user to enter a ticker symbol
+// Make the symbol variable dynamic, and make it into a parameter for the ChartDisplay components
+// Move all of the ChartDisplay components, plus that input into a single component called FinancialsDisplay
+// Come up with a better way of selecting the data to display, as there is a of data and creating buttons
+//    hard coded keys is not great for this. It was just a quick way to get something on the screen
+// Once all of that is working, add the ability to add multiple symbols and display them all at once, normalizing the data if necessary / user wants it
+
+// 
 function App() {
-  const [chatContent, setChatContent] = useState("")
-
-  const userMessageSubmit = (textAreaValue) => {
-    console.log("User message submitted")
-    // TODO send the message to the server
-    // This will involve establishing a websocket connection on load
-    // logging in, and sending the message to the server
-    // this will end up in a seperate file
-    setChatContent(chatContent + "\n" + textAreaValue)
-  }
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault(); // Prevents the default newline insertion behavior
-      const textAreaValue = e.target.value;
-      if (textAreaValue.trim() !== "") {
-        userMessageSubmit(textAreaValue);
-      }
-      e.target.value = "";
-    }
-  }
 
   return (
     <div className='h-[90vh] w-[90vw] items-center justify-center'>
@@ -54,52 +35,30 @@ function App() {
       <ResizablePanelGroup direction="horizontal"
       className="justify-self-center h-full rounded-lg border">
         <ResizablePanel className='w-full'>
-          {/*Chat Panel
-              This should probably be in a seperate component / file*/}
-          <div className="flex flex-col h-full justify-items-center p-6">
-            <h1 className='font-semibold justify-self-center pb-4'>Kocoon</h1>         
-            <Card className="flex-1 flex flex-col pt-4">
-            <div className='px-4'>
-              <span className="text-lg font-semibold">Chat:</span>
-            </div>
-            <CardContent className="flex-1 overflow-hidden">
-              {/* ScrollArea will fill available space */}
-              <ScrollArea className='flex-1 whitespace-pre-wrap'>
-                {chatContent}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-          
-          {/* Textarea stays at the bottom */}
-          <div className='pt-4'>
-            <Textarea 
-              id="userMessageTextArea"
-              placeholder="Type your message here..."
-              onKeyUp={handleKeyPress}
-            />
-          </div>
-        </div>
+          {/* Chat Panel */}
+          <ChatDisplay />
       </ResizablePanel>
         <ResizableHandle withHandle/>
         <ResizablePanel defaultSize={67} className='w-full'>
-          { /* Secondary panel
-                This will probably contain charts or something,
-                but it will likely end up in a seperate component too */ }
-          <div className='flex-auto w-full h-full items-center justify-center p-6'>
+          {/* Secondary panel */}
+          <div className="flex flex-col h-full justify-items-center p-6">
             <h2 className='font-semibold justify-self-center pb-4'>Some buttons and charts</h2>
-            {/* These buttons just show how convinient shadcn is,
+            {/* These buttons don't do anything other than show how convinient shadcn is,
                   especially how they change with the selected theme*/}
-            <Button variant="default">Primary</Button>
-            <Button variant="secondary">Secondary</Button>
-            <Button variant="outline">Outline</Button>
-            <Button variant="destructive">Warning</Button>
-            <br />
-            <div className="py-3">
-              <span className="font-semibold">Theme: </span>
-              <ModeToggle />
-            </div>
-            <br />
-            <ScrollArea className='w-full h-full'>
+            <ScrollArea className='flex-1'>
+
+              <div className="py-3">
+                <span className="font-semibold">Theme: </span>
+                <ModeToggle />
+              </div>
+
+              <Button variant="default">Primary</Button>
+              <Button variant="secondary">Secondary</Button>
+              <Button variant="outline">Outline</Button>
+              <Button variant="destructive">Warning</Button>
+              <br />
+
+              <br />
               <CashFlowChartDisplay />
               <IncomeChartDisplay />
               <BalanceSheetChartDisplay />
@@ -108,7 +67,6 @@ function App() {
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
-    
   )
 }
 
