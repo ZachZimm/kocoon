@@ -1,10 +1,12 @@
 # This file contains a FastAPI server that serves financial data from the PostgreSQL database
 # TODO: Consider some kind of authentication for the API, even if it's just a token in the header saved in the frontend code for now
 
+import os
 import sys
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 import uvicorn
 import psycopg2
 import json
@@ -23,11 +25,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+load_dotenv()
+
 conn = psycopg2.connect(
-    host="lab",
-    database="financials",
-    user="myuser",
-    password="letmein"
+    host=os.getenv('DATABASE_HOST'),
+    database='financials',
+    user=os.getenv('DATABASE_USER'),
+    password=os.getenv('DATABASE_PASSWORD')
 )
 all_tickers = []
 

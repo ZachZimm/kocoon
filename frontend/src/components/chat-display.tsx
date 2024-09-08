@@ -11,7 +11,6 @@ export function ChatDisplay() {
         // TODO send the message to the server
         // This will involve establishing a websocket connection on load
         // logging in, and sending the message to the server
-        // this will end up in a seperate file
         setChatContent(chatContent + "\n" + textAreaValue)
     }
 
@@ -27,7 +26,6 @@ export function ChatDisplay() {
   }
 
 return (
-        // <div>
         <div className="flex flex-col h-full justify-items-center p-6">
             <h1 className='font-semibold justify-self-center pb-4'>Kocoon</h1>         
             <Card className="flex-1 flex flex-col pt-4">

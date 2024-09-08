@@ -34,11 +34,15 @@ function App() {
       <ResizablePanelGroup direction="vertical"
       className="justify-self-center h-full rounded-lg border">        
         <ResizablePanel defaultSize={4} className='w-full'>
+
+          {/* Header 
+                This will eventually go into a seperate component*/}
           <div className="flex flex-col flex-1 py-1 px-2">
             <div className='flex-1 justify-end flex'>
               <ModeToggle />
             </div>
           </div>
+
         </ResizablePanel>
         <ResizableHandle withHandle/>
         <ResizablePanel className='w-full h-full'>
