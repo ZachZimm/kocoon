@@ -12,33 +12,9 @@ import { FinancialsDisplay } from './components/financials-display'
 import ModeToggle from './components/ui/mode-toggle'
 import { text } from 'stream/consumers'
 
-// TODO:
-// FinancialsDisplay
-// Add an input for the user to enter a ticker symbol
-// Make the symbol variable dynamic, and make it into a parameter for the ChartDisplay components
-// Move all of the ChartDisplay components, plus that input into a single component called FinancialsDisplay
-// Come up with a better way of selecting the data to display, as there is a of data and creating buttons
-//    hard coded keys is not great for this. It was just a quick way to get something on the screen
-// Once all of that is working, add the ability to add multiple symbols and display them all at once, normalizing the data if necessary / user wants it
 
-// 
+
 function App() {
-  // const [symbol, setSymbol] = useState('AAPL')
-
-  // const handleSymbolChange = () => {
-  //   const tickerInput = document.getElementById('tickerInput') as HTMLInputElement
-  //   setSymbol(tickerInput.value)
-  //   console.log(tickerInput.value)
-  //   tickerInput.value = ''
-  // }
-
-  // const handleKeyPress: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
-  //   if (e.key === "Enter") {
-  //     e.preventDefault(); // Prevents the default newline insertion behavior
-  //     handleSymbolChange()
-  //   }
-  // }
-
   return (
     <div className='h-[90vh] w-[90vw] items-center justify-center'>
       <ResizablePanelGroup direction="vertical"
