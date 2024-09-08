@@ -19,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { ChartDisplay } from './components/chart-display'
 import { text } from 'stream/consumers'
 import ModeToggle from './components/ui/mode-toggle'
 
@@ -28,8 +29,9 @@ function App() {
   const userMessageSubmit = (textAreaValue) => {
     console.log("User message submitted")
     // TODO send the message to the server
-    // This will involve establishing a websocket connection
-    // and sending the message to the server
+    // This will involve establishing a websocket connection on load
+    // logging in, and sending the message to the server
+    // this will end up in a seperate file
     setChatContent(chatContent + "\n" + textAreaValue)
   }
 
@@ -82,7 +84,7 @@ function App() {
                 This will probably contain charts or something,
                 but it will likely end up in a seperate component too */ }
           <div className='flex-auto w-full h-full items-center justify-center p-6'>
-            <h1 className='font-semibold justify-self-center pb-4'>Some Buttons</h1>
+            <h2 className='font-semibold justify-self-center pb-4'>Some Buttons, and a chart</h2>
             {/* These buttons just show how convinient shadcn is,
                   especially how they change with the selected theme*/}
             <Button variant="default">Primary</Button>
@@ -90,11 +92,14 @@ function App() {
             <Button variant="outline">Outline</Button>
             <Button variant="destructive">Warning</Button>
             <br />
-            <ModeToggle />
+            <div className="py-3">
+              <span className="font-semibold">Theme: </span>
+              <ModeToggle />
+            </div>
+            <br />
+            <ChartDisplay />
           </div>
-          
         </ResizablePanel>
-        
       </ResizablePanelGroup>
     </div>
     

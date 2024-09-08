@@ -10,7 +10,11 @@ import psycopg2
 import json
 
 app = FastAPI()
-origins = [ "*" ]
+origins = [ "http://192.168.1.193:5173",
+            "http://localhost:5173",
+            "http://host.zzimm.com:5173",
+            "https://host.zzimm.com",
+            ]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
