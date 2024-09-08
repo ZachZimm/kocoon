@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 export function ChatDisplay() {
     const [chatContent, setChatContent] = useState("")
-    const userMessageSubmit = (textAreaValue) => {
+    const userMessageSubmit = (textAreaValue: string) => {
         console.log("User message submitted")
         // TODO send the message to the server
         // This will involve establishing a websocket connection on load
@@ -15,7 +15,7 @@ export function ChatDisplay() {
         setChatContent(chatContent + "\n" + textAreaValue)
     }
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress: React.KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault(); // Prevents the default newline insertion behavior
       const textAreaValue = e.target.value;
@@ -53,4 +53,5 @@ return (
         </div>
             )
         }
+
 export default ChatDisplay

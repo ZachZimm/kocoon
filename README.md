@@ -2,7 +2,7 @@
 #### is a personal finance and investment exploration platform that takes both a qualitative and a quantitative approach to financial literacy.
 
 ## Starting the frontend for development
-- Ensure `nodejs` and `npm` are installed on your system
+- ensure `nodejs` and `npm` are installed on your system
 - `cd` into the `frontend` directory
 - run `npm install`
 - run `npm run dev`

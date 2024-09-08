@@ -31,41 +31,56 @@ function App() {
 
   return (
     <div className='h-[90vh] w-[90vw] items-center justify-center'>
-
-      <ResizablePanelGroup direction="horizontal"
-      className="justify-self-center h-full rounded-lg border">
-        <ResizablePanel className='w-full'>
-          {/* Chat Panel */}
-          <ChatDisplay />
-      </ResizablePanel>
+      <ResizablePanelGroup direction="vertical"
+      className="justify-self-center h-full rounded-lg border">        
+        <ResizablePanel defaultSize={4} className='w-full'>
+          <div className="flex flex-col flex-1 py-1 px-2">
+            <div className='flex-1 justify-end flex'>
+              <ModeToggle />
+            </div>
+          </div>
+        </ResizablePanel>
         <ResizableHandle withHandle/>
-        <ResizablePanel defaultSize={67} className='w-full'>
-          {/* Secondary panel */}
-          <div className="flex flex-col h-full justify-items-center p-6">
-            <h2 className='font-semibold justify-self-center pb-4'>Some buttons and charts</h2>
-            {/* These buttons don't do anything other than show how convinient shadcn is,
-                  especially how they change with the selected theme*/}
-            <ScrollArea className='flex-1'>
+        <ResizablePanel className='w-full h-full'>
+          <ResizablePanelGroup direction="horizontal"
+          className="justify-self-center h-full rounded-lg border">
 
-              <div className="py-3">
-                <span className="font-semibold">Theme: </span>
-                <ModeToggle />
+            <ResizablePanel className='w-full'>
+              {/* Chat Panel */}
+              <ChatDisplay />
+          </ResizablePanel>
+            <ResizableHandle withHandle/>
+            <ResizablePanel defaultSize={67} className='w-full'>
+              {/* Secondary panel */}
+              <div className="flex flex-col h-full justify-items-center p-6">
+                <h2 className='font-semibold justify-self-center pb-4'>Some buttons and charts</h2>
+                {/* These buttons don't do anything other than show how convinient shadcn is,
+                      especially how they change with the selected theme*/}
+                <ScrollArea className='flex-1'>
+                  <Button variant="default">Primary</Button>
+                  <Button variant="secondary">Secondary</Button>
+                  <Button variant="outline">Outline</Button>
+                  <Button variant="destructive">Warning</Button>
+                  <br />
+
+                  <br />
+                  <CashFlowChartDisplay />
+                  <IncomeChartDisplay />
+                  <BalanceSheetChartDisplay />
+                </ ScrollArea>
               </div>
-
-              <Button variant="default">Primary</Button>
-              <Button variant="secondary">Secondary</Button>
-              <Button variant="outline">Outline</Button>
-              <Button variant="destructive">Warning</Button>
-              <br />
-
-              <br />
-              <CashFlowChartDisplay />
-              <IncomeChartDisplay />
-              <BalanceSheetChartDisplay />
-            </ ScrollArea>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </ResizablePanel>
+        <ResizableHandle withHandle/>
+        <ResizablePanel defaultSize={0} className='w-full'>
+          <div className="flex flex-col flex-1 py-1 px-2">
+            <span className='font-semibold'>Nothing here yet...</span>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
+
+      
     </div>
   )
 }
