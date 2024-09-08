@@ -22,7 +22,6 @@ export const description = "An interactive line chart"
 async function fetchFinancialData(symbol: string) {
     const response = await fetch(`https://host.zzimm.com/api/income/q/${symbol}`)
     const data = await response.json()
-    console.log(data)
     return data
   }
 
@@ -44,15 +43,18 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function IncomeChartDisplay() {
+interface IncomeChartDisplayProps {
+  initialSymbol: string
+}
+
+export function IncomeChartDisplay({initialSymbol }: IncomeChartDisplayProps) {
   const [chartData, setChartData] = React.useState([])
   const [loading, setLoading] = React.useState(true)
-  const symbol = "AMD"
   const [activeChart, setActiveChart] =
     React.useState<keyof typeof chartConfig>("EBITDA")
 
   React.useEffect(() => {
-    fetchFinancialData(symbol).then((data) => {
+    fetchFinancialData(initialSymbol).then((data) => {
       // Process the data to extract the necessary information for charting
       const formattedData = data.map((item: any) => ({
         date: item.asOfDate,
@@ -63,14 +65,14 @@ export function IncomeChartDisplay() {
       setChartData(formattedData)
       setLoading(false)
     })
-  }, [symbol])
+  }, [initialSymbol])
 
   return (
     <Card>
       <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
         <div className="flex flex-1 flex-col justify-center gap-1 px-2 py-2 sm:py-2">
           <CardDescription>
-            Historical income data for {symbol} 
+            Historical income data for {initialSymbol} 
           </CardDescription>
         </div>
         <div className="flex">
@@ -143,7 +145,7 @@ export function IncomeChartDisplay() {
             />
           </LineChart>
         </ChartContainer>
-        <span className="font-semibold">{symbol} - {chartConfig[activeChart].label}</span>
+        <span className="font-semibold">{initialSymbol} - {chartConfig[activeChart].label}</span>
       </CardContent>
     </Card>
   )

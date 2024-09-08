@@ -22,7 +22,6 @@ export const description = "An interactive line chart"
 async function fetchFinancialData(symbol: string) {
     const response = await fetch(`https://host.zzimm.com/api/balance_sheet/q/${symbol}`)
     const data = await response.json()
-    console.log(data)
     return data
   }
 
@@ -35,7 +34,7 @@ const chartConfig = {
     color: "hsl(var(--chart-1))",
   },
   TotalLiabilitiesNetMinorityInterest: {
-    label: "Total Liabilities NetMinority Interest",
+    label: "Total Liabilities Net Minority Interest",
     color: "hsl(var(--chart-2))",
   },
   StockholdersEquity: {
@@ -44,15 +43,19 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function BalanceSheetChartDisplay() {
+interface BalanceSheetChartDisplayProps {
+  initialSymbol: string
+}
+
+export function BalanceSheetChartDisplay({initialSymbol }: BalanceSheetChartDisplayProps) {
   const [chartData, setChartData] = React.useState([])
   const [loading, setLoading] = React.useState(true)
-  const symbol = "AMD"
+  // const [symbol, setSymbol] = React.useState(initialSymbol)
   const [activeChart, setActiveChart] =
     React.useState<keyof typeof chartConfig>("TotalAssets")
 
   React.useEffect(() => {
-    fetchFinancialData(symbol).then((data) => {
+    fetchFinancialData(initialSymbol).then((data) => {
       // Process the data to extract the necessary information for charting
       const formattedData = data.map((item: any) => ({
         date: item.asOfDate,
@@ -63,14 +66,14 @@ export function BalanceSheetChartDisplay() {
       setChartData(formattedData)
       setLoading(false)
     })
-  }, [symbol])
+  }, [initialSymbol]) // fetch data when symbol changes
 
   return (
     <Card>
       <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
         <div className="flex flex-1 flex-col justify-center gap-1 px-2 py-2 sm:py-2">
           <CardDescription>
-            Historical cash flow data for {symbol} 
+            Historical balance sheet data for {initialSymbol} 
           </CardDescription>
         </div>
         <div className="flex">
@@ -143,7 +146,7 @@ export function BalanceSheetChartDisplay() {
             />
           </LineChart>
         </ChartContainer>
-        <span className="font-semibold">{symbol} - {chartConfig[activeChart].label}</span>
+        <span className="font-semibold">{initialSymbol} - {chartConfig[activeChart].label}</span>
       </CardContent>
     </Card>
   )

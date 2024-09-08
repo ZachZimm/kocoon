@@ -2,18 +2,13 @@ import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
-import { CashFlowChartDisplay } from './components/cash-flow-chart-display'
-import { BalanceSheetChartDisplay } from './components/balance-sheet-chart-display'
-import { IncomeChartDisplay } from './components/income-chart-display'
 import { ChatDisplay } from './components/chat-display'
+import { FinancialsDisplay } from './components/financials-display'
 import ModeToggle from './components/ui/mode-toggle'
 import { text } from 'stream/consumers'
 
@@ -28,6 +23,21 @@ import { text } from 'stream/consumers'
 
 // 
 function App() {
+  // const [symbol, setSymbol] = useState('AAPL')
+
+  // const handleSymbolChange = () => {
+  //   const tickerInput = document.getElementById('tickerInput') as HTMLInputElement
+  //   setSymbol(tickerInput.value)
+  //   console.log(tickerInput.value)
+  //   tickerInput.value = ''
+  // }
+
+  // const handleKeyPress: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
+  //   if (e.key === "Enter") {
+  //     e.preventDefault(); // Prevents the default newline insertion behavior
+  //     handleSymbolChange()
+  //   }
+  // }
 
   return (
     <div className='h-[90vh] w-[90vw] items-center justify-center'>
@@ -57,23 +67,8 @@ function App() {
             <ResizableHandle withHandle/>
             <ResizablePanel defaultSize={67} className='w-full'>
               {/* Secondary panel */}
-              <div className="flex flex-col h-full justify-items-center p-6 bg-accent">
-                <h2 className='font-semibold justify-self-center pb-4 text-accent-foreground'>Some buttons and charts</h2>
-                {/* These buttons don't do anything other than show how convinient shadcn is,
-                      especially how they change with the selected theme*/}
-                <ScrollArea className='flex-1'>
-                  <Button variant="default">Primary</Button>
-                  <Button variant="secondary">Secondary</Button>
-                  <Button variant="outline">Outline</Button>
-                  <Button variant="destructive">Warning</Button>
-                  <br />
+              <FinancialsDisplay />
 
-                  <br />
-                  <CashFlowChartDisplay />
-                  <IncomeChartDisplay />
-                  <BalanceSheetChartDisplay />
-                </ ScrollArea>
-              </div>
             </ResizablePanel>
           </ResizablePanelGroup>
         </ResizablePanel>
