@@ -32,8 +32,8 @@ export function FinancialsDisplay() {
     }
   }
 return (
-        <div className="flex flex-col h-full justify-items-center p-6 bg-accent">
-            <h2 className='font-semibold justify-self-center pb-4 text-accent-foreground'>Some buttons and charts</h2>
+        <div className="flex flex-col h-full justify-items-center p-3 bg-accent">
+            <h2 className='font-semibold justify-self-center pb-2 text-accent-foreground'>Some buttons and charts</h2>
             <ScrollArea className='flex-1'>
                 <div className='flex'>
                     <Input placeholder="enter a ticker..." 
