@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,10 +8,80 @@ import { Badge } from '@/components/ui/badge';
 export function ChatDisplay() {
     const [badge1Message, setBadge1Message] = useState("Here is an example question!")
     const [badge2Message, setBadge2Message] = useState("And here's another question you can ask!")
+    const [socket, setSocket] = useState<WebSocket | null>(null);
+    const [lastMessageId, setLastMessageId] = useState<number>(0);
+
+    useEffect(() => {
+        // Create WebSocket connection.
+        const ws = new WebSocket('wss://host.zzimm.com/ws');
+
+        // Connection opened
+        ws.addEventListener('open', () => {
+            console.log('WebSocket connection established.');
+            userLogin("test_user", ws);
+        });
+
+        // Listen for messages
+        ws.addEventListener('message', (event) => {
+            console.log('Message from server ', event.data);
+            // You can also append the message to the chat log here if needed
+            const message = JSON.parse(event.data);
+            if (message.mode.includes("chat streaming")) {
+                if (message.mode.includes("finished")) {
+                    setLastMessageId(lastMessageId + 1);
+                }
+                else {
+                    streamResponseMessage(message.message);
+                }
+            }
+        });
+        // Save the WebSocket instance to state
+        setSocket(ws);
+        // Cleanup on component unmount
+        return () => {
+            ws.close();
+        };
+      }, []);
+
+    const userLogin = (username: string, _socket: WebSocket) => {
+        if (_socket && _socket.readyState === WebSocket.OPEN) {
+          // Send the login message to the server
+          const loginMessage = JSON.stringify({"func": "login", "username": username});
+          _socket.send(loginMessage);
+          console.log('Login message sent to server: ', loginMessage);
+        } else {
+            console.error('WebSocket connection is not open.');
+        }
+    }
+
+    const streamResponseMessage = (response: string) => {
+        const chatLog = document.getElementById('chatLog');
+        // check if the latest message's id is the same as the lastMessageId
+        // if it is, then append the message to the existing message
+        // otherwise, create a new message element
+        // with the lastMessageId
+        if (chatLog?.lastChild?.id === `message-${lastMessageId}`) {
+            const lastMessage = chatLog.lastChild as HTMLElement;
+            lastMessage.innerHTML += response;
+        }
+        else {
+            const newMessage = document.createElement('Badge');
+            newMessage.className = "border p-1 rounded-md bg-primary text-sm";
+            newMessage.innerHTML = response;
+            newMessage.id = `message-${lastMessageId}`;
+            chatLog?.appendChild(newMessage);
+        }
+    }
+
     const userMessageSubmit = (textAreaValue: string) => {
-        // TODO send the message to the server
-        // This will involve establishing a websocket connection on load
-        // logging in, and sending the message to the server
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          // Send the message to the server
+          let message = JSON.stringify({"func": "chat", "message": textAreaValue});
+          socket.send(message);
+          console.log('Message sent to server: ', message);
+        } else {
+            console.error('WebSocket connection is not open.');
+        }
 
         const chatLog = document.getElementById('chatLog');
         const newMessage = document.createElement('Badge');
