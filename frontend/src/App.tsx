@@ -10,7 +10,6 @@ import {
 import { ChatDisplay } from './components/chat-display'
 import { FinancialsDisplay } from './components/financials-display'
 import ModeToggle from './components/ui/mode-toggle'
-import { text } from 'stream/consumers'
 
 function App() {
   return (

@@ -3,7 +3,7 @@
 
 import sys
 import pandas as pd
-# import yfinance as yf
+import yfinance as yf
 from dotenv import load_dotenv
 import yahooquery as yq
 import requests
@@ -444,6 +444,19 @@ def find_tickers_missing_earnings_date(tickers):
             missing_earnings_history.append(ticker)
     return missing_earnings_history
 
+def get_insider_purchase_activity():
+    ticker = yq.Ticker('AAPL')
+    return ticker.share_purchase_activity
+
+def get_price_history(ticker):
+    # using yfinance
+    t = yf.Ticker(ticker)
+    start_date = '1900-01-01' # Get full price history
+    history = t.history(start=start_date)
+    print(history)
+    print(f'history shape: {history.shape}')
+    return history
+
 if __name__ == "__main__":
     # This update_dataset mess was my original go at keeping the data up to date
     # It needs to be refactored and cleaned up but does some useful things that we can keep around
@@ -524,6 +537,10 @@ if __name__ == "__main__":
         all_tickers = python_usage.get_all_tickers()
         frequency_list = ['q', 'a']
         save_financials_loop(all_tickers, frequency_list)
+    elif 'insiders' in sys.argv:
+        get_insider_purchase_activity()
+    elif 'price_history' in sys.argv:
+        get_price_history('AAPL')
     else:
         print("Usage:")
         print("python fund_data.py get_all_financials_data")
