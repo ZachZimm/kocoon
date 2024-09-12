@@ -17,11 +17,10 @@ function App() {
     <div className='h-[92vh] w-[93vw] items-center justify-center'>
       <ResizablePanelGroup direction="vertical"
       className="justify-self-center h-full rounded-lg border">        
-        <ResizablePanel defaultSize={4} className='w-full'>
+        <ResizablePanel defaultSize={6} className='w-full'>
 
           {/* Header 
                 This will eventually go into a seperate component*/}
-          
           <div className="flex flex-row flex-1 py-1 px-2">
             <h2 className='font-semibold text-lg justify-self-center pb-4'>Kocoon</h2>
             <div className='flex-1 justify-end flex'>
@@ -34,7 +33,6 @@ function App() {
         <ResizablePanel className='w-full h-full'>
           <ResizablePanelGroup direction="horizontal"
           className="justify-self-center h-full rounded-lg border">
-
             <ResizablePanel className='w-full'>
               {/* Chat Panel */}
               <ChatDisplay />
@@ -55,8 +53,6 @@ function App() {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
-
-      
     </div>
   )
 }
