@@ -56,6 +56,10 @@ export function IncomeChartDisplay({initialSymbol }: IncomeChartDisplayProps) {
   React.useEffect(() => {
     fetchFinancialData(initialSymbol).then((data) => {
       // Process the data to extract the necessary information for charting
+      // drop rows where periodType == TTM
+        // if we do not do this, the chart will be erratic and appear to be missing data
+      data = data.filter((item: any) => item.periodType.toLowerCase() !== "ttm")
+
       const formattedData = data.map((item: any) => ({
         date: item.asOfDate,
         EBITDA: parseFloat(item.EBITDA),

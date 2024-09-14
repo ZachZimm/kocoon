@@ -6,7 +6,6 @@ def check_env_vars() -> bool:
     all_present = True
     for var in env_vars:
         if (var not in os.environ) or (len(os.getenv(var)) == 0):
-            print(f"Environment variable {var} is not set.")
             all_present = False
             from dotenv import load_dotenv
             load_dotenv()
