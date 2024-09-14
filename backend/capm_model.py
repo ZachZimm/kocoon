@@ -3,40 +3,22 @@ import pandas as pd
 import yfinance as yf
 from fredapi import Fred
 import datetime
-from dotenv import load_dotenv
 import numpy as np
 from statsmodels.api import OLS, add_constant
+from backend.db_interface import DBInterface
 
 class CAPMModel:
-    def __init__(self, ticker, fred_api_key, db_connection):
+    def __init__(self, ticker, fred_api_key, db_interface: DBInterface):
         self.ticker = ticker
+        self.db_interface = db_interface
         self.fred_api_key = fred_api_key
         self.fred = Fred(api_key=fred_api_key)
-        self.conn = db_connection
         self.all_tickers = self.get_all_tickers()
-
-    def get_all_tickers(self):
-        cursor = self.conn.cursor()
-        cursor.execute("SELECT DISTINCT ticker FROM financial_master;")
-        tickers = cursor.fetchall()
-        ticker_list = [ticker[0] for ticker in tickers]
-        cursor.close()
-        return ticker_list
-    
-    def query(self, ticker='AAPL', period_type='q', report_type='balance_sheet') -> list:
-        cursor = self.conn.cursor()
-        sql_string = f'SELECT * FROM "{ticker}_{period_type}_{report_type}"'
-        cursor.execute(sql_string)
-        financial_data = cursor.fetchall()
-        column_names = [desc[0] for desc in cursor.description]
-        data_dict_list = [dict(zip(column_names, row)) for row in financial_data]
-
-        return data_dict_list
 
     def fetch_financial_data(self, ticker, date, report_type='balance_sheet', period_type='q'):
         ticker = ticker.strip().upper()
         print(f"Fetching financial data for {ticker}")
-        financial_data = self.query(ticker=ticker, period_type=period_type, report_type=report_type)
+        financial_data = self.db_interface.query(ticker=ticker, period_type=period_type, report_type=report_type)
         # Filter data up to the given date
         time_format = '%Y-%m-%d'
         financial_data = [item for item in financial_data if datetime.datetime.strptime(item['asOfDate'], time_format) <= date]
@@ -117,7 +99,6 @@ class CAPMModel:
             bm_ratio = book_value_per_share / stock_price
             market_caps[ticker] = market_cap
             bm_ratios[ticker] = bm_ratio
-        print(f"BM Ratios:\n{bm_ratios}")
         return market_caps, bm_ratios
 
     def form_portfolios(self, market_caps, bm_ratios):
@@ -170,9 +151,6 @@ class CAPMModel:
     
     def compute_smb_hml(self, portfolio_returns):
         # SMB calculation
-        print("Available portfolios in portfolio_returns:")
-        print(list(portfolio_returns.keys()))
-
         small_ports = ['Small/Low', 'Small/Medium', 'Small/High']
         big_ports = ['Big/Low', 'Big/Medium', 'Big/High']
         small_returns = pd.concat([portfolio_returns[port] for port in small_ports if port in portfolio_returns], axis=1).mean(axis=1)
@@ -264,25 +242,16 @@ class CAPMModel:
         }
 
 if __name__ == '__main__':
-    import psycopg2
-
-    load_dotenv()
-    conn = psycopg2.connect(
-        host=os.getenv('DATABASE_HOST'),
-        database='financials',
-        user=os.getenv('DATABASE_USER'),
-        password=os.getenv('DATABASE_PASSWORD')
-    )
-
-    capm = CAPMModel(ticker='AAPL', fred_api_key=os.getenv('FRED_API_KEY'), db_connection=conn)
+    db_interface = DBInterface()
     ticker = 'AAPL'
+    capm = CAPMModel(ticker=ticker, fred_api_key=os.getenv('FRED_API_KEY'), db_interface=db_interface)
     market_index = '^GSPC' # S&P 500
     # market_index = "^IXIC" # NASDAQ
     start_date = datetime.datetime(2017, 1, 1)
     end_date = datetime.datetime.now()
     
     result = capm.three_factor_model(ticker, market_index, start_date, end_date)
-    print("Three-Factor Model Results:")
+    print(f"Three-Factor Model Results for {ticker}:")
     # Print the results
     print(f"Expected Return: {round(result['Expected_Return'] * 100 * 252, 4)}%")
     print(f"Risk-Free Rate: {round(result['Risk_Free_Rate'] * 100 * 252, 4)}%")
@@ -294,11 +263,10 @@ if __name__ == '__main__':
     for factor, mean in result['Factor_Means'].items():
         print(f"  {factor}: {round(mean * 100 * 252, 4)}%")
     
-    print("\n\nCAPM Model Results:")
+    print(f"\n\nCAPM Model Results for {ticker}:")
     result_capm = capm.capm_model(ticker, market_index, start_date, end_date)
     for key, value in result_capm.items():
         if key == 'Beta':
             print(f'{key}: {round(value, 4)}')
         else:
             print(f'{key}: {round(value * 100 * 252, 4)}%')
-    conn.close()

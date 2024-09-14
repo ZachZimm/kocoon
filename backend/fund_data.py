@@ -1,5 +1,5 @@
 # This script is used to get financial data from Yahoo Finance and save it to a 'data' directory of CSV files
-# Much of this code is currently unused, but it is kept here for reference as we want it around in the near future
+# Some of this code is currently unused, but it is kept here for reference as we want it around in the near future
 
 import sys
 import pandas as pd
@@ -48,7 +48,6 @@ def merge_close_ttm_rows(df):
 
 def av_get_income_statement(ticker='AAPL'):
     url = f'https://www.alphavantage.co/query?function=INCOME_STATEMENT&symbol={ticker}&apikey={av_key}'
-    # url = f'https://www.alphavantage.co/query?function=INCOME_STATEMENT&symbol=IBM&apikey=demo'
     r = requests.get(url)
     data = r.json()
     a_df = pd.DataFrame(data['annualReports'])
@@ -198,7 +197,7 @@ def update_financials_yq(ticker='AAPL', frequency_list=['q']):
             
     return 0
 
-def get_insider_reports(): # This function needs to be tested without the y_user and y_pass
+def get_insider_reports(): # This function needs to be fixed and tested without the y_user and y_pass
     r = None
     if y_user == '' or y_pass == '':
        r = yq.Research()
@@ -265,7 +264,7 @@ def save_financials_loop(tickers, frequency_list):
         if i < num_tickers:
             time.sleep(sleep_time)
 
-    # get_insider_reports()
+    # get_insider_reports() # this function is broken without y_user and y_pass
     print(f'successful tickers: {success}')
     print(f'failed tickers: {list(set(failed_tickers))}')
     print(f'total time elapsed: {round((time.time() - time_start)/60,1)} minutes')
@@ -325,7 +324,7 @@ def load_fund_data(ticker):
         return_data.append(data)
     return return_data
 
-def build_fund_data(ticker, frequency='q'):
+def build_fund_data(ticker, frequency='q'): # This function is not used, but we may want to use it in the future when building a training set
     df = pd.DataFrame()
     data = load_fund_data(ticker)
     for d in data:
@@ -525,7 +524,6 @@ if __name__ == "__main__":
         print(f'runtime: {round((time.time() - time_start)/60,1)} minutes')
     # This function tests saving the financials for a couple of tickers
     elif 'limited_financials' in sys.argv:
-        # using save_financials_loop
         frequency_list = ['q', 'a']
         tickers = ["AAPL", "MSFT"]
         save_financials_loop(tickers, frequency_list)
