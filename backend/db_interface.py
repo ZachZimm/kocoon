@@ -1,5 +1,6 @@
 import psycopg2
 import os
+from datetime import datetime, date
 
 def check_env_vars() -> bool:
     env_vars = ['DATABASE_HOST', 'DATABASE_USER', 'DATABASE_PASSWORD']
@@ -45,6 +46,60 @@ class DBInterface:
         financial_data = cursor.fetchall()
         column_names = [desc[0] for desc in cursor.description]
         data_dict_list = [dict(zip(column_names, row)) for row in financial_data]
+
+        return data_dict_list
+    
+    def parse_date(self, date):
+        # dates can be of type str, datetime, or date
+        if isinstance(date, str):
+            try:
+                date = datetime.strptime(date, '%Y-%m-%d').date()
+            except ValueError:
+                raise ValueError("date must be in 'YYYY-MM-DD' format")
+        elif isinstance(date, datetime):
+            date = date.date()
+        elif not isinstance(date, date):
+            raise ValueError("date must be a date string, datetime, or date object")
+        return date
+    
+    def query_stock_history(self, ticker='AAPL', period_type='1d', start_date=None, end_date=None):
+        cursor = self.conn.cursor()
+        table_name = f'{ticker}_{period_type}_price_history'
+        sql_string = f'SELECT * FROM "{table_name}"'
+        conditions = []
+        params = []
+
+        # parse and validate start_date
+        # dates can be of type str, datetime, or date
+        if start_date is not None:
+            start_date = self.parse_date(start_date)
+            conditions.append('date >= %s')
+            params.append(start_date)
+
+        # parse and validate end_date
+        if end_date is not None:
+            end_date = self.parse_date(end_date)
+            conditions.append('date <= %s') # prevent SQL injection
+            params.append(end_date)
+
+        if conditions:
+            sql_string += ' WHERE ' + ' AND '.join(conditions)
+        # Order the results by date
+        sql_string += ' ORDER BY date'
+
+        try:
+            cursor.execute(sql_string, params)
+            price_data = cursor.fetchall()
+            column_names = [desc[0] for desc in cursor.description]
+            data_dict_list = [dict(zip(column_names, row)) for row in price_data]
+        except psycopg2.errors.UndefinedTable:
+            print(f"Table {table_name} does not exist.")
+            data_dict_list = []
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            data_dict_list = []
+        finally:
+            cursor.close()
 
         return data_dict_list
 

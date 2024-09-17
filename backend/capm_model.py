@@ -55,15 +55,18 @@ class CAPMModel:
                 return self.asset_prices, self.market_prices
             self.start_date = start_date
             self.end_date = end_date
-            y_ticker = yf.Ticker(ticker)
             y_market_index = yf.Ticker(market_index)
-            asset_prices = y_ticker.history(start=start_date, end=end_date)['Close']
+            asset_prices = self.db_interface.query_stock_history(ticker=ticker, start_date=start_date, end_date=end_date)
             market_prices = y_market_index.history(start=start_date, end=end_date)['Close']
+            # Make a Series of the asset prices using date and close price
+            asset_prices = pd.Series([float(item['close']) for item in asset_prices], index=[pd.to_datetime(item['date']) for item in asset_prices])
+            asset_prices.rename('Close', inplace=True)
             # Make the data tz-naive
             asset_prices.index = asset_prices.index.tz_localize(None)
             market_prices.index = market_prices.index.tz_localize(None)
             self.asset_prices = asset_prices
             self.market_prices = market_prices
+
             return asset_prices, market_prices
 
     def fetch_risk_free_rate(self, asset_prices, start_date, end_date):
@@ -121,10 +124,10 @@ class CAPMModel:
             if shares_outstanding is None or total_equity is None:
                 continue
             # Get stock price as of date
-            y_ticker = yf.Ticker(ticker)
             try:
-                price_data = y_ticker.history(start=date - datetime.timedelta(days=5), end=date + datetime.timedelta(days=1))
-                stock_price = float(price_data['Close'].iloc[-1])
+                print(f'Fetching stock price for {ticker} on {date}')
+                price_data = self.db_interface.query_stock_history(ticker=ticker, end_date=date)
+                stock_price = float(price_data[-1]['close'])
             except Exception:
                 continue
             if stock_price is None or shares_outstanding == 0:
@@ -346,12 +349,15 @@ class CAPMModel:
     
     def calculate_portfolio_returns(self, portfolios, start_date, end_date):
         # Map portfolios to tickers
+        print(f"Calculating portfolio returns for {len(portfolios)} portfolios...")
         portfolio_groups = portfolios.groupby('Portfolio')['Ticker'].apply(list)
         portfolio_returns = {}
         for portfolio, tickers in portfolio_groups.items():
             try:
                 # Fetch adjusted close prices for tickers
                 prices = yf.download(tickers, start=start_date, end=end_date)['Close']
+                # prices = self.db_interface.query_stock_history(ticker=tickers, start_date=start_date, end_date=end_date)
+                # prices = pd.Series([float(item['close']) for item in prices], index=[pd.to_datetime(item['date']) for item in prices])
                 # Make the data tz-naive
                 prices.index = prices.index.tz_localize(None)
                 # Handle single ticker case
@@ -364,6 +370,7 @@ class CAPMModel:
             except Exception as e:
                 print(f"Error fetching prices for {portfolio} portfolio:\n{e}")
                 continue
+        print(f"Portfolio returns calculated for {len(portfolio_returns)} portfolios.")
         return portfolio_returns
     
     def compute_smb_hml(self, portfolio_returns):
@@ -690,8 +697,8 @@ if __name__ == '__main__':
     end_date = datetime.datetime.now()
     
     result_capm = capm.capm_model(ticker, market_index, start_date, end_date)
-    # result_tf = capm.three_factor_model(ticker, market_index, start_date, end_date)
-    result_four_factor = capm.four_factor_model(ticker, market_index, start_date, end_date)
+    result_tf = capm.three_factor_model(ticker, market_index, start_date, end_date)
+    # result_four_factor = capm.four_factor_model(ticker, market_index, start_date, end_date)
     # result_five_factor = capm.five_factor_model(ticker, market_index, start_date, end_date)
     # result_six_factor = capm.six_factor_model(ticker, market_index, start_date, end_date)
 
@@ -720,29 +727,29 @@ if __name__ == '__main__':
     # for factor, mean in result_five_factor['Factor_Means'].items():
     #     print(f"  {factor}: {round(mean * 100 * 252, 4)}%")
     
-    print(f"\n\nFour-Factor Model Results for {ticker}:")
-    print(f"Expected Return: {round(result_four_factor['Expected_Return'] * 100 * 252, 4)}%")
-    print(f"Average Market Return ({market_index}): {round(result_capm['Average_Market_Return'] * 100 * 252, 4)}%")
-    print(f"Risk-Free Rate: {round(result_four_factor['Risk_Free_Rate'] * 100 * 252, 4)}%")
-    print("\nBetas:")
-    for factor, beta in result_four_factor['Betas'].items():
-        if factor != 'const':
-            print(f"  {factor}: {round(beta, 4)}")
-    print("\nFactor Means (Annualized):")
-    for factor, mean in result_four_factor['Factor_Means'].items():
-        print(f"  {factor}: {round(mean * 100 * 252, 4)}%")
-
-    # print(f"\n\nThree-Factor Model Results for {ticker}:")
-    # print(f"Expected Return: {round(result_tf['Expected_Return'] * 100 * 252, 4)}%")
+    # print(f"\n\nFour-Factor Model Results for {ticker}:")
+    # print(f"Expected Return: {round(result_four_factor['Expected_Return'] * 100 * 252, 4)}%")
     # print(f"Average Market Return ({market_index}): {round(result_capm['Average_Market_Return'] * 100 * 252, 4)}%")
-    # print(f"Risk-Free Rate: {round(result_tf['Risk_Free_Rate'] * 100 * 252, 4)}%")
+    # print(f"Risk-Free Rate: {round(result_four_factor['Risk_Free_Rate'] * 100 * 252, 4)}%")
     # print("\nBetas:")
-    # for factor, beta in result_tf['Betas'].items():
+    # for factor, beta in result_four_factor['Betas'].items():
     #     if factor != 'const':
     #         print(f"  {factor}: {round(beta, 4)}")
     # print("\nFactor Means (Annualized):")
-    # for factor, mean in result_tf['Factor_Means'].items():
+    # for factor, mean in result_four_factor['Factor_Means'].items():
     #     print(f"  {factor}: {round(mean * 100 * 252, 4)}%")
+
+    print(f"\n\nThree-Factor Model Results for {ticker}:")
+    print(f"Expected Return: {round(result_tf['Expected_Return'] * 100 * 252, 4)}%")
+    print(f"Average Market Return ({market_index}): {round(result_capm['Average_Market_Return'] * 100 * 252, 4)}%")
+    print(f"Risk-Free Rate: {round(result_tf['Risk_Free_Rate'] * 100 * 252, 4)}%")
+    print("\nBetas:")
+    for factor, beta in result_tf['Betas'].items():
+        if factor != 'const':
+            print(f"  {factor}: {round(beta, 4)}")
+    print("\nFactor Means (Annualized):")
+    for factor, mean in result_tf['Factor_Means'].items():
+        print(f"  {factor}: {round(mean * 100 * 252, 4)}%")
     
     print(f"\n\nCAPM Model Results for {ticker}:")
     for key, value in result_capm.items():
