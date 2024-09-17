@@ -8,6 +8,7 @@ import datetime
 import numpy as np
 from statsmodels.api import OLS, add_constant
 from db_interface import DBInterface
+from dateutil.relativedelta import relativedelta
 
 class CAPMModel:
     def __init__(self, ticker, fred_api_key, db_interface: DBInterface):
@@ -27,21 +28,24 @@ class CAPMModel:
         self.smb = None
         self.hml = None
         self.momentum = None
-        self.all_prices = None  # To store historical prices for all tickers
+        self.all_prices = None
         self.start_date = None
         self.end_date = None
         self.market_caps = None
         self.bm_ratios = None
+        self.profitability = None
+        self.investment = None
 
     def fetch_financial_data(self, ticker, date, report_type='balance_sheet', period_type='q'):
         ticker = ticker.strip().upper()
-        print(f"Fetching financial data for {ticker}")
         financial_data = self.db_interface.query(ticker=ticker, period_type=period_type, report_type=report_type)
         # Filter data up to the given date
         time_format = '%Y-%m-%d'
         financial_data = [item for item in financial_data if datetime.datetime.strptime(item['asOfDate'], time_format) <= date]
+        # drop rows where periodType == 'TTM'
+        financial_data = [item for item in financial_data if item['periodType'] != 'TTM']
         if financial_data:
-            return financial_data[0]  # Return the latest data before the date
+            return financial_data[-1]  # Return the latest data before the date
         else:
             return None
     
@@ -193,6 +197,68 @@ class CAPMModel:
             print("Unable to compute momentum factor due to insufficient data.")
             self.momentum = None
             return None
+    
+    def compute_profitability(self, date):
+        # This function computes operating profitability for all tickers
+        if self.profitability is not None:
+            return self.profitability
+        self.profitability = {}
+        for ticker in self.db_interface.all_tickers:
+            income_statement = self.fetch_financial_data(ticker, date, report_type='income')
+            balance_sheet = self.fetch_financial_data(ticker, date, report_type='balance_sheet')
+
+            if income_statement is None or balance_sheet is None:
+                continue
+            
+            # Safely extract and convert financial data
+            def get_float(value):
+                try:
+                    return float(value)
+                except (TypeError, ValueError):
+                    return np.nan
+            
+            revenue = get_float(income_statement.get('TotalRevenue'))
+            cogs = get_float(income_statement.get('CostOfRevenue'))
+            sga = get_float(income_statement.get('SellingGeneralAndAdministration'))
+            total_equity = get_float(balance_sheet.get('StockholdersEquity'))
+            
+            # Handle InterestExpense: if None or NaN, set to zero
+            interest_expense = income_statement.get('InterestExpense')
+            if interest_expense is None or pd.isna(interest_expense):
+                interest_expense = 0.0
+            else:
+                interest_expense = get_float(interest_expense)
+
+            print(f"{ticker} - TR: {revenue}, COGS: {cogs}, SGA: {sga}, TE: {total_equity}, IE: {interest_expense}, {income_statement.get('periodType')}")
+            # Check for missing or invalid values
+            if np.isnan(revenue) or np.isnan(cogs) or np.isnan(sga) or np.isnan(interest_expense) or np.isnan(total_equity) or total_equity == 0:
+                continue  # Skip if any required value is missing or invalid
+
+            # Calculate operating profit and profitability
+            operating_profit = revenue - cogs - sga - interest_expense
+            profitability = operating_profit / total_equity
+            self.profitability[ticker] = profitability
+            print(f"Profitability for {ticker}: {profitability}")
+        print(f"Total tickers with profitability data: {len(self.profitability)}")
+        return self.profitability
+
+    def compute_investment(self, date):
+        # This function computes investment (asset growth) for all tickers
+        if self.investment is not None:
+            return self.investment
+        self.investment = {}
+        for ticker in self.db_interface.all_tickers:
+            balance_sheet_current = self.fetch_financial_data(ticker, date, report_type='balance_sheet')
+            balance_sheet_prior = self.fetch_financial_data(ticker, date - relativedelta(years=1), report_type='balance_sheet')
+            if balance_sheet_current is None or balance_sheet_prior is None:
+                continue
+            total_assets_current = float(balance_sheet_current.get('TotalAssets', np.nan))
+            total_assets_prior = float(balance_sheet_prior.get('TotalAssets', np.nan))
+            if np.isnan(total_assets_current) or np.isnan(total_assets_prior) or total_assets_prior == 0:
+                continue
+            investment = (total_assets_current - total_assets_prior) / total_assets_prior
+            self.investment[ticker] = investment
+        return self.investment
 
     def form_portfolios(self, market_caps, bm_ratios):
         df = pd.DataFrame({
@@ -220,6 +286,63 @@ class CAPMModel:
         # Create portfolio labels
         df['Portfolio'] = df['Size'] + '/' + df['Value']
         return df
+
+    def form_profitability_portfolios(self, market_caps, profitability):
+        df = pd.DataFrame({
+            'Ticker': list(market_caps.keys()),
+            'Market_Cap': list(market_caps.values()),
+            'Profitability': [profitability.get(ticker, np.nan) for ticker in market_caps.keys()]
+        })
+        df.dropna(inplace=True)
+        # Size breakpoints
+        size_median = df['Market_Cap'].median()
+        # Profitability breakpoints
+        prof30 = df['Profitability'].quantile(0.3)
+        prof70 = df['Profitability'].quantile(0.7)
+        # Assign Size
+        df['Size'] = np.where(df['Market_Cap'] <= size_median, 'Small', 'Big')
+        # Assign Profitability
+        conditions = [
+            (df['Profitability'] <= prof30),
+            (df['Profitability'] > prof30) & (df['Profitability'] <= prof70),
+            (df['Profitability'] > prof70)
+        ]
+        choices = ['Weak', 'Neutral', 'Robust']
+        df['Profitability_Group'] = np.select(conditions, choices, default='Unknown')
+        # Create portfolio labels
+        df['Portfolio'] = df['Size'] + '/' + df['Profitability_Group']
+
+        # Print portfolio counts
+        print("\nProfitability Portfolios Formed:")
+        print(df['Portfolio'].value_counts())
+    
+        return df
+
+    def form_investment_portfolios(self, market_caps, investment):
+        df = pd.DataFrame({
+            'Ticker': list(market_caps.keys()),
+            'Market_Cap': list(market_caps.values()),
+            'Investment': [investment.get(ticker, np.nan) for ticker in market_caps.keys()]
+        })
+        df.dropna(inplace=True)
+        # Size breakpoints
+        size_median = df['Market_Cap'].median()
+        # Investment breakpoints
+        inv30 = df['Investment'].quantile(0.3)
+        inv70 = df['Investment'].quantile(0.7)
+        # Assign Size
+        df['Size'] = np.where(df['Market_Cap'] <= size_median, 'Small', 'Big')
+        # Assign Investment
+        conditions = [
+            (df['Investment'] <= inv30),
+            (df['Investment'] > inv30) & (df['Investment'] <= inv70),
+            (df['Investment'] > inv70)
+        ]
+        choices = ['Conservative', 'Neutral', 'Aggressive']
+        df['Investment_Group'] = np.select(conditions, choices, default='Unknown')
+        # Create portfolio labels
+        df['Portfolio'] = df['Size'] + '/' + df['Investment_Group']
+        return df
     
     def calculate_portfolio_returns(self, portfolios, start_date, end_date):
         # Map portfolios to tickers
@@ -239,6 +362,7 @@ class CAPMModel:
                     returns = prices.pct_change().mean(axis=1)
                 portfolio_returns[portfolio] = returns
             except Exception as e:
+                print(f"Error fetching prices for {portfolio} portfolio:\n{e}")
                 continue
         return portfolio_returns
     
@@ -259,6 +383,26 @@ class CAPMModel:
         growth_returns = pd.concat([portfolio_returns[port] for port in growth_ports if port in portfolio_returns], axis=1).mean(axis=1)
         hml = value_returns - growth_returns
         return smb, hml
+    
+    def compute_rmw(self, portfolio_returns):
+        # Compute RMW (Robust Minus Weak) factor
+        print(f"{len(portfolio_returns)} portfolios passed to compute RMW")
+        print(portfolio_returns.keys())
+        robust_ports = ['Small/Robust', 'Big/Robust']
+        weak_ports = ['Small/Weak', 'Big/Weak']
+        robust_returns = pd.concat([portfolio_returns[port] for port in robust_ports if port in portfolio_returns], axis=1).mean(axis=1)
+        weak_returns = pd.concat([portfolio_returns[port] for port in weak_ports if port in portfolio_returns], axis=1).mean(axis=1)
+        rmw = robust_returns - weak_returns
+        return rmw
+
+    def compute_cma(self, portfolio_returns):
+        # Compute CMA (Conservative Minus Aggressive) factor
+        conservative_ports = ['Small/Conservative', 'Big/Conservative']
+        aggressive_ports = ['Small/Aggressive', 'Big/Aggressive']
+        conservative_returns = pd.concat([portfolio_returns[port] for port in conservative_ports if port in portfolio_returns], axis=1).mean(axis=1)
+        aggressive_returns = pd.concat([portfolio_returns[port] for port in aggressive_ports if port in portfolio_returns], axis=1).mean(axis=1)
+        cma = conservative_returns - aggressive_returns
+        return cma
     
     def calculate_regression(self, data):
         y = data['Asset_Excess']
@@ -401,6 +545,140 @@ class CAPMModel:
             'Risk_Free_Rate': float(risk_free_rates.iloc[-1]),
             'Factor_Means': factor_means
         }
+    
+    def five_factor_model(self, ticker, market_index, start_date, end_date):
+        # Fetch asset and market data
+        asset_prices, market_prices = self.fetch_asset_market_data(ticker, market_index, start_date, end_date)
+        asset_returns = asset_prices.pct_change()
+        market_returns = market_prices.pct_change()
+        # Fetch risk-free rate
+        risk_free_rates = self.fetch_risk_free_rate(asset_prices, start_date, end_date)
+        # Compute market caps, B/M ratios, profitability, and investment at the formation date
+        formation_date = datetime.datetime(start_date.year, 6, 30)
+        market_caps, bm_ratios = self.compute_market_cap_bm(formation_date)
+        profitability = self.compute_profitability(formation_date)
+        investment = self.compute_investment(formation_date)
+        # Form portfolios
+        portfolios_sv = self.form_portfolios(market_caps, bm_ratios)
+        portfolios_sp = self.form_profitability_portfolios(market_caps, profitability)
+        portfolios_si = self.form_investment_portfolios(market_caps, investment)
+        print(f"len(portfolios_sv): {len(portfolios_sv)}")
+        print(f"len(portfolios_sp): {len(portfolios_sp)}")
+        print(f"len(portfolios_si): {len(portfolios_si)}")
+        # Merge portfolios
+        portfolios_all = pd.concat([portfolios_sv, portfolios_sp, portfolios_si])
+        print(f"len(portfolios_all): {len(portfolios_all)}")
+        # Calculate portfolio returns
+        portfolio_returns = self.calculate_portfolio_returns(portfolios_all, start_date, end_date)
+        print(f"len(portfolio_returns): {len(portfolio_returns)}")
+        # Compute SMB and HML factors
+        smb, hml = self.compute_smb_hml(portfolio_returns)
+        self.smb = smb
+        self.hml = hml
+        # Compute RMW and CMA factors
+        rmw = self.compute_rmw(portfolio_returns)
+        cma = self.compute_cma(portfolio_returns)
+        self.rmw = rmw
+        self.cma = cma
+        # Align data
+        data = pd.DataFrame({
+            'Asset': asset_returns,
+            'Market': market_returns,
+            'Risk_Free': risk_free_rates,
+            'SMB': smb,
+            'HML': hml,
+            'RMW': rmw,
+            'CMA': cma
+        })
+        data['Asset_Excess'] = data['Asset'] - data['Risk_Free']
+        data['Market_Excess'] = data['Market'] - data['Risk_Free']
+        data.dropna(inplace=True)
+        # Perform regression
+        model = self.calculate_regression(data)
+        betas = model.params
+        # Calculate expected return
+        factor_means = data[['Market_Excess', 'SMB', 'HML', 'RMW', 'CMA']].mean()
+        expected_return = self.calculate_expected_return(risk_free_rates.iloc[-1], betas, factor_means)
+        print(f"CMA: {cma}")
+        print(f"RMW: {rmw}")
+        print(f"Expected Return: {expected_return}")
+        return {
+            'Betas': betas,
+            'Expected_Return': float(expected_return.iloc[-1]),
+            'Risk_Free_Rate': float(risk_free_rates.iloc[-1]),
+            'Factor_Means': factor_means
+        }
+
+    def six_factor_model(self, ticker, market_index, start_date, end_date):
+        # Fetch asset and market data
+        asset_prices, market_prices = self.fetch_asset_market_data(ticker, market_index, start_date, end_date)
+        asset_returns = asset_prices.pct_change()
+        market_returns = market_prices.pct_change()
+        # Fetch risk-free rate
+        risk_free_rates = self.fetch_risk_free_rate(asset_prices, start_date, end_date)
+        # Compute factors if not already computed
+        if self.smb is None or self.hml is None or self.rmw is None or self.cma is None:
+            # Compute market caps, B/M ratios, profitability, and investment at the formation date
+            formation_date = datetime.datetime(start_date.year, 6, 30)
+            market_caps, bm_ratios = self.compute_market_cap_bm(formation_date)
+            profitability = self.compute_profitability(formation_date)
+            investment = self.compute_investment(formation_date)
+            # Form portfolios
+            portfolios_sv = self.form_portfolios(market_caps, bm_ratios)
+            portfolios_sp = self.form_profitability_portfolios(market_caps, profitability)
+            portfolios_si = self.form_investment_portfolios(market_caps, investment)
+            # Merge portfolios
+            portfolios_all = pd.concat([portfolios_sv, portfolios_sp, portfolios_si]).drop_duplicates(subset='Ticker')
+            # Calculate portfolio returns
+            portfolio_returns = self.calculate_portfolio_returns(portfolios_all, start_date, end_date)
+            # Compute SMB and HML factors
+            smb, hml = self.compute_smb_hml(portfolio_returns)
+            self.smb = smb
+            self.hml = hml
+            # Compute RMW and CMA factors
+            rmw = self.compute_rmw(portfolio_returns)
+            cma = self.compute_cma(portfolio_returns)
+            self.rmw = rmw
+            self.cma = cma
+        else:
+            smb = self.smb
+            hml = self.hml
+            rmw = self.rmw
+            cma = self.cma
+        # Compute momentum factor
+        momentum = self.compute_momentum_factor(start_date, end_date)
+        if momentum is None:
+            print("Momentum factor could not be computed.")
+            return None
+        # Align data
+        data = pd.DataFrame({
+            'Asset': asset_returns,
+            'Market': market_returns,
+            'Risk_Free': risk_free_rates,
+            'SMB': smb,
+            'HML': hml,
+            'RMW': rmw,
+            'CMA': cma,
+            'MOM': momentum
+        })
+        data['Asset_Excess'] = data['Asset'] - data['Risk_Free']
+        data['Market_Excess'] = data['Market'] - data['Risk_Free']
+        data.dropna(inplace=True)
+        if data.empty:
+            print("No data available after aligning for regression.")
+            return None
+        # Perform regression
+        model = self.calculate_regression(data)
+        betas = model.params
+        # Calculate expected return
+        factor_means = data[['Market_Excess', 'SMB', 'HML', 'RMW', 'CMA', 'MOM']].mean()
+        expected_return = self.calculate_expected_return(risk_free_rates.iloc[-1], betas, factor_means)
+        return {
+            'Betas': betas,
+            'Expected_Return': float(expected_return),
+            'Risk_Free_Rate': float(risk_free_rates.iloc[-1]),
+            'Factor_Means': factor_means
+        }
 
 if __name__ == '__main__':
     db_interface = DBInterface()
@@ -412,10 +690,37 @@ if __name__ == '__main__':
     end_date = datetime.datetime.now()
     
     result_capm = capm.capm_model(ticker, market_index, start_date, end_date)
-    result_tf = capm.three_factor_model(ticker, market_index, start_date, end_date)
+    # result_tf = capm.three_factor_model(ticker, market_index, start_date, end_date)
     result_four_factor = capm.four_factor_model(ticker, market_index, start_date, end_date)
-    print("\n\n")
-    print(f"Four-Factor Model Results for {ticker}:")
+    # result_five_factor = capm.five_factor_model(ticker, market_index, start_date, end_date)
+    # result_six_factor = capm.six_factor_model(ticker, market_index, start_date, end_date)
+
+    # print("\n\n")
+    # print(f"Six-Factor Model Results for {ticker}:")
+    # print(f"Expected Return: {round(result_six_factor['Expected_Return'] * 100 * 252, 4)}%")
+    # print(f"Average Market Return ({market_index}): {round(result_capm['Average_Market_Return'] * 100 * 252, 4)}%")
+    # print(f"Risk-Free Rate: {round(result_six_factor['Risk_Free_Rate'] * 100 * 252, 4)}%")
+    # print("\nBetas:")
+    # for factor, beta in result_six_factor['Betas'].items():
+    #     if factor != 'const':
+    #         print(f"  {factor}: {round(beta, 4)}")
+    # print("\nFactor Means (Annualized):")
+    # for factor, mean in result_six_factor['Factor_Means'].items():
+    #     print(f"  {factor}: {round(mean * 100 * 252, 4)}%")
+    
+    # print(f"\n\nFive-Factor Model Results for {ticker}:")
+    # print(f"Expected Return: {round(result_five_factor['Expected_Return'] * 100 * 252, 4)}%")
+    # print(f"Average Market Return ({market_index}): {round(result_capm['Average_Market_Return'] * 100 * 252, 4)}%")
+    # print(f"Risk-Free Rate: {round(result_five_factor['Risk_Free_Rate'] * 100 * 252, 4)}%")
+    # print("\nBetas:")
+    # for factor, beta in result_five_factor['Betas'].items():
+    #     if factor != 'const':
+    #         print(f"  {factor}: {round(beta, 4)}")
+    # print("\nFactor Means (Annualized):")
+    # for factor, mean in result_five_factor['Factor_Means'].items():
+    #     print(f"  {factor}: {round(mean * 100 * 252, 4)}%")
+    
+    print(f"\n\nFour-Factor Model Results for {ticker}:")
     print(f"Expected Return: {round(result_four_factor['Expected_Return'] * 100 * 252, 4)}%")
     print(f"Average Market Return ({market_index}): {round(result_capm['Average_Market_Return'] * 100 * 252, 4)}%")
     print(f"Risk-Free Rate: {round(result_four_factor['Risk_Free_Rate'] * 100 * 252, 4)}%")
@@ -427,17 +732,17 @@ if __name__ == '__main__':
     for factor, mean in result_four_factor['Factor_Means'].items():
         print(f"  {factor}: {round(mean * 100 * 252, 4)}%")
 
-    print(f"\n\nThree-Factor Model Results for {ticker}:")
-    print(f"Expected Return: {round(result_tf['Expected_Return'] * 100 * 252, 4)}%")
-    print(f"Average Market Return ({market_index}): {round(result_capm['Average_Market_Return'] * 100 * 252, 4)}%")
-    print(f"Risk-Free Rate: {round(result_tf['Risk_Free_Rate'] * 100 * 252, 4)}%")
-    print("\nBetas:")
-    for factor, beta in result_tf['Betas'].items():
-        if factor != 'const':
-            print(f"  {factor}: {round(beta, 4)}")
-    print("\nFactor Means (Annualized):")
-    for factor, mean in result_tf['Factor_Means'].items():
-        print(f"  {factor}: {round(mean * 100 * 252, 4)}%")
+    # print(f"\n\nThree-Factor Model Results for {ticker}:")
+    # print(f"Expected Return: {round(result_tf['Expected_Return'] * 100 * 252, 4)}%")
+    # print(f"Average Market Return ({market_index}): {round(result_capm['Average_Market_Return'] * 100 * 252, 4)}%")
+    # print(f"Risk-Free Rate: {round(result_tf['Risk_Free_Rate'] * 100 * 252, 4)}%")
+    # print("\nBetas:")
+    # for factor, beta in result_tf['Betas'].items():
+    #     if factor != 'const':
+    #         print(f"  {factor}: {round(beta, 4)}")
+    # print("\nFactor Means (Annualized):")
+    # for factor, mean in result_tf['Factor_Means'].items():
+    #     print(f"  {factor}: {round(mean * 100 * 252, 4)}%")
     
     print(f"\n\nCAPM Model Results for {ticker}:")
     for key, value in result_capm.items():

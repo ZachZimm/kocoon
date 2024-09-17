@@ -31,19 +31,26 @@ db_interface = DBInterface() # Consider a different name for this object as it i
 def get_balance_sheet(period_type: str, ticker: str):
     if db_interface.verify_query_input(period_type, ticker) == False:
         return {"error": "Invalid input"}
-    return db_interface.query(ticker=ticker.upper(), period_type=period_type, report_type='balance_sheet')
+    data: list = db_interface.query(ticker=ticker.upper(), period_type=period_type, report_type='balance_sheet')
+    data = [data for data in data if data['periodType'] != 'TTM']
+    return data
 
 @app.get("/api/income/{period_type}/{ticker}")
 def get_income_statement(period_type: str, ticker: str):
     if db_interface.verify_query_input(period_type, ticker) == False:
         return {"error": "Invalid input"}
-    return db_interface.query(ticker=ticker.upper(), period_type=period_type, report_type='income')
+    data: list = db_interface.query(ticker=ticker.upper(), period_type=period_type, report_type='income')
+    data = [data for data in data if data['periodType'] != 'TTM']
+    return data
 
 @app.get("/api/cash_flow/{period_type}/{ticker}")
 def get_cash_flow(period_type: str, ticker: str):
     if db_interface.verify_query_input(period_type, ticker) == False:
         return {"error": "Invalid input"}
-    return db_interface.query(ticker=ticker.upper(), period_type=period_type, report_type='cash_flow')
+    data: list = db_interface.query(ticker=ticker.upper(), period_type=period_type, report_type='cash_flow')
+    data = [data for data in data if data['periodType'] != 'TTM']
+    return data
+
 
 @app.get("/api/tickers")
 def get_all_tickers() -> list:
