@@ -51,6 +51,12 @@ def get_cash_flow(period_type: str, ticker: str):
     data = [data for data in data if data['periodType'] != 'TTM']
     return data
 
+@app.get("/api/price_history/{period}/{ticker}")
+def get_price_history(period: str, ticker: str):
+    if db_interface.verify_price_history_input(period, ticker) == False:
+        return {"error": "Invalid input"}
+    data: list = db_interface.query_stock_history(ticker=ticker.upper(), period_type=period, start_date='1900-01-01')
+    return data
 
 @app.get("/api/tickers")
 def get_all_tickers() -> list:

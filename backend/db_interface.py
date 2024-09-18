@@ -153,3 +153,10 @@ class DBInterface:
         if ticker not in self.all_tickers:
             return False
         return True # valid input
+    
+    def verify_price_history_input(self, period, ticker) -> bool:
+        if period not in ['1d']:
+            return False
+        if ticker not in self.all_tickers:
+            return False
+        return True
