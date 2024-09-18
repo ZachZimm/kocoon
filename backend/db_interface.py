@@ -1,5 +1,6 @@
-import psycopg2
 import os
+import pandas as pd
+import psycopg2
 from datetime import datetime, date
 
 def check_env_vars() -> bool:
@@ -102,6 +103,36 @@ class DBInterface:
             cursor.close()
 
         return data_dict_list
+    
+    def query_batch_stock_history(self, tickers, period_type='1d', start_date=None, end_date=None):
+        dfs = []  # list to store dataframes
+        for ticker in tickers:
+            data = self.query_stock_history(ticker, period_type, start_date, end_date)
+            if data:
+                df = pd.DataFrame(data)
+                # Ensure 'date' is in the dataframe
+                if 'date' in df.columns:
+                    df.set_index('date', inplace=True)
+                    # Create MultiIndex columns
+                    df.columns = pd.MultiIndex.from_product([df.columns, [ticker]])
+                    dfs.append(df)
+                else:
+                    print(f"No 'date' column for ticker {ticker}, skipping.")
+            else:
+                print(f"No data returned for ticker {ticker}, skipping.")
+        if dfs:
+            # Concatenate along columns
+            combined_df = pd.concat(dfs, axis=1)
+            # Define the order of fields
+            fields_order = ['open', 'high', 'low', 'close', 'adj_close', 'volume']
+            # Reindex the MultiIndex columns to match the field order
+            combined_df = combined_df.reindex(fields_order, level=0, axis=1)
+            # Sort columns to match yf.download format
+            combined_df.sort_index(axis=1, level=[0,1], inplace=True)
+            return combined_df
+        else:
+            print("No data found for any tickers.")
+            return pd.DataFrame()  # Return empty dataframe
 
     def get_all_tickers(self) -> list:
         cursor = self.conn.cursor()

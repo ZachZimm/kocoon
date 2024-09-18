@@ -125,7 +125,6 @@ class CAPMModel:
                 continue
             # Get stock price as of date
             try:
-                print(f'Fetching stock price for {ticker} on {date}')
                 price_data = self.db_interface.query_stock_history(ticker=ticker, end_date=date)
                 stock_price = float(price_data[-1]['close'])
             except Exception:
@@ -698,7 +697,7 @@ if __name__ == '__main__':
     
     result_capm = capm.capm_model(ticker, market_index, start_date, end_date)
     result_tf = capm.three_factor_model(ticker, market_index, start_date, end_date)
-    # result_four_factor = capm.four_factor_model(ticker, market_index, start_date, end_date)
+    result_four_factor = capm.four_factor_model(ticker, market_index, start_date, end_date)
     # result_five_factor = capm.five_factor_model(ticker, market_index, start_date, end_date)
     # result_six_factor = capm.six_factor_model(ticker, market_index, start_date, end_date)
 
@@ -727,17 +726,17 @@ if __name__ == '__main__':
     # for factor, mean in result_five_factor['Factor_Means'].items():
     #     print(f"  {factor}: {round(mean * 100 * 252, 4)}%")
     
-    # print(f"\n\nFour-Factor Model Results for {ticker}:")
-    # print(f"Expected Return: {round(result_four_factor['Expected_Return'] * 100 * 252, 4)}%")
-    # print(f"Average Market Return ({market_index}): {round(result_capm['Average_Market_Return'] * 100 * 252, 4)}%")
-    # print(f"Risk-Free Rate: {round(result_four_factor['Risk_Free_Rate'] * 100 * 252, 4)}%")
-    # print("\nBetas:")
-    # for factor, beta in result_four_factor['Betas'].items():
-    #     if factor != 'const':
-    #         print(f"  {factor}: {round(beta, 4)}")
-    # print("\nFactor Means (Annualized):")
-    # for factor, mean in result_four_factor['Factor_Means'].items():
-    #     print(f"  {factor}: {round(mean * 100 * 252, 4)}%")
+    print(f"\n\nFour-Factor Model Results for {ticker}:")
+    print(f"Expected Return: {round(result_four_factor['Expected_Return'] * 100 * 252, 4)}%")
+    print(f"Average Market Return ({market_index}): {round(result_capm['Average_Market_Return'] * 100 * 252, 4)}%")
+    print(f"Risk-Free Rate: {round(result_four_factor['Risk_Free_Rate'] * 100 * 252, 4)}%")
+    print("\nBetas:")
+    for factor, beta in result_four_factor['Betas'].items():
+        if factor != 'const':
+            print(f"  {factor}: {round(beta, 4)}")
+    print("\nFactor Means (Annualized):")
+    for factor, mean in result_four_factor['Factor_Means'].items():
+        print(f"  {factor}: {round(mean * 100 * 252, 4)}%")
 
     print(f"\n\nThree-Factor Model Results for {ticker}:")
     print(f"Expected Return: {round(result_tf['Expected_Return'] * 100 * 252, 4)}%")
