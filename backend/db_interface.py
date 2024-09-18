@@ -112,6 +112,7 @@ class DBInterface:
                 df = pd.DataFrame(data)
                 # Ensure 'date' is in the dataframe
                 if 'date' in df.columns:
+                    df['date'] = pd.to_datetime(df['date'])
                     df.set_index('date', inplace=True)
                     # Create MultiIndex columns
                     df.columns = pd.MultiIndex.from_product([df.columns, [ticker]])
@@ -127,6 +128,8 @@ class DBInterface:
             fields_order = ['open', 'high', 'low', 'close', 'adj_close', 'volume']
             # Reindex the MultiIndex columns to match the field order
             combined_df = combined_df.reindex(fields_order, level=0, axis=1)
+            # convert all rows to float
+            combined_df = combined_df.astype(float)
             # Sort columns to match yf.download format
             combined_df.sort_index(axis=1, level=[0,1], inplace=True)
             return combined_df
