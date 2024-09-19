@@ -124,10 +124,21 @@ class DBInterface:
         if dfs:
             # Concatenate along columns
             combined_df = pd.concat(dfs, axis=1)
+            # Check for duplicate indices
+            if combined_df.index.duplicated().any():
+                # Remove duplicate indices
+                combined_df = combined_df[~combined_df.index.duplicated(keep='first')]
+
+            # check for duplicate labels
+            if combined_df.columns.duplicated().any():
+                # Remove duplicate columns
+                combined_df = combined_df.loc[:, ~combined_df.columns.duplicated()]
+
             # Define the order of fields
             fields_order = ['open', 'high', 'low', 'close', 'adj_close', 'volume']
             # Reindex the MultiIndex columns to match the field order
             combined_df = combined_df.reindex(fields_order, level=0, axis=1)
+
             # convert all rows to float
             combined_df = combined_df.astype(float)
             # Sort columns to match yf.download format

@@ -1,4 +1,4 @@
-# This file contains an implementation of the CAPM model, the Fama-French Three-Factor model, and the Carhart Four-Factor model
+# This file contains an implementation of the CAPM model, the Fama-French Three-Factor model, Carhart Four-Factor model, Fam-French Five-Factor model, and Fama-French Six-Factor model
 
 import os
 import pandas as pd
@@ -88,8 +88,8 @@ class CAPMModel:
         # This function calculates excess returns for the asset and market
         if self.excess_returns_data is not None:
             return self.excess_returns_data
-        asset_returns = asset_prices.pct_change().dropna()
-        market_returns = market_prices.pct_change().dropna()
+        asset_returns = asset_prices.pct_change(fill_method=None).dropna()
+        market_returns = market_prices.pct_change(fill_method=None).dropna()
         # Align dates
         data = pd.DataFrame({
             'Asset': asset_returns,
@@ -184,8 +184,8 @@ class CAPMModel:
             if winner_prices.empty or loser_prices.empty:
                 continue
             # Calculate portfolio returns
-            winner_returns = winner_prices.pct_change().mean(axis=1)
-            loser_returns = loser_prices.pct_change().mean(axis=1)
+            winner_returns = winner_prices.pct_change(fill_method=None).mean(axis=1)
+            loser_returns = loser_prices.pct_change(fill_method=None).mean(axis=1)
             # Calculate momentum factor as difference
             mom_returns = winner_returns - loser_returns
             momentum_returns.append(mom_returns)
@@ -357,10 +357,10 @@ class CAPMModel:
                 prices.index = prices.index.tz_localize(None)
                 # Handle single ticker case
                 if isinstance(prices, pd.Series):
-                    returns = prices.pct_change()
+                    returns = prices.pct_change(fill_method=None)
                 else:
                     # Calculate equal-weighted returns
-                    returns = prices.pct_change().mean(axis=1)
+                    returns = prices.pct_change(fill_method=None).mean(axis=1)
                 portfolio_returns[portfolio] = returns
             except Exception as e:
                 print(f"Error fetching prices for {portfolio} portfolio:\n{e}")
@@ -454,8 +454,8 @@ class CAPMModel:
     def three_factor_model(self, ticker, market_index, start_date, end_date):
         # Fetch asset and market data
         asset_prices, market_prices = self.fetch_asset_market_data(ticker, market_index, start_date, end_date)
-        asset_returns = asset_prices.pct_change()
-        market_returns = market_prices.pct_change()
+        asset_returns = asset_prices.pct_change(fill_method=None)
+        market_returns = market_prices.pct_change(fill_method=None)
         # Fetch risk-free rate
         risk_free_rates = self.fetch_risk_free_rate(asset_prices, start_date, end_date)
         # Compute market caps and B/M ratios at the formation date
@@ -502,8 +502,8 @@ class CAPMModel:
     def four_factor_model(self, ticker, market_index, start_date, end_date):
         # Fetch asset and market data
         asset_prices, market_prices = self.fetch_asset_market_data(ticker, market_index, start_date, end_date)
-        asset_returns = asset_prices.pct_change()
-        market_returns = market_prices.pct_change()
+        asset_returns = asset_prices.pct_change(fill_method=None)
+        market_returns = market_prices.pct_change(fill_method=None)
         # Fetch risk-free rate
         risk_free_rates = self.fetch_risk_free_rate(asset_prices, start_date, end_date)
         # Compute SMB and HML if not already computed
@@ -572,8 +572,8 @@ class CAPMModel:
     def five_factor_model(self, ticker, market_index, start_date, end_date):
         # Fetch asset and market data
         asset_prices, market_prices = self.fetch_asset_market_data(ticker, market_index, start_date, end_date)
-        asset_returns = asset_prices.pct_change()
-        market_returns = market_prices.pct_change()
+        asset_returns = asset_prices.pct_change(fill_method=None)
+        market_returns = market_prices.pct_change(fill_method=None)
         # Fetch risk-free rate
         risk_free_rates = self.fetch_risk_free_rate(asset_prices, start_date, end_date)
         # Compute market caps, B/M ratios, profitability, and investment at the formation date
@@ -634,8 +634,8 @@ class CAPMModel:
     def six_factor_model(self, ticker, market_index, start_date, end_date):
         # Fetch asset and market data
         asset_prices, market_prices = self.fetch_asset_market_data(ticker, market_index, start_date, end_date)
-        asset_returns = asset_prices.pct_change()
-        market_returns = market_prices.pct_change()
+        asset_returns = asset_prices.pct_change(fill_method=None)
+        market_returns = market_prices.pct_change(fill_method=None)
         # Fetch risk-free rate
         risk_free_rates = self.fetch_risk_free_rate(asset_prices, start_date, end_date)
         # Compute factors if not already computed
@@ -748,21 +748,21 @@ if __name__ == '__main__':
     # result_tf = capm.three_factor_model(ticker, market_index, start_date, end_date)
     # result_four_factor = capm.four_factor_model(ticker, market_index, start_date, end_date)
     result_five_factor = capm.five_factor_model(ticker, market_index, start_date, end_date)
-    result_six_factor = capm.six_factor_model(ticker, market_index, start_date, end_date)
+    # result_six_factor = capm.six_factor_model(ticker, market_index, start_date, end_date)
     result_1_str = capm.multifactor_results_to_string(result_five_factor, include_factors=False)
-    result_1_str_2 = capm.multifactor_results_to_string(result_six_factor, include_factors=False)
+    # result_1_str_2 = capm.multifactor_results_to_string(result_six_factor, include_factors=False)
     first_finish = time.time()
 
-    result_five_factor_2 = capm.five_factor_model(ticker2, market_index, start_date, end_date)
-    result_six_factor_2 = capm.six_factor_model(ticker2, market_index, start_date, end_date)
-    result_2_str = capm.multifactor_results_to_string(result_five_factor_2, include_factors=False)
-    result_2_str_2 = capm.multifactor_results_to_string(result_six_factor_2, include_factors=False)
-    second_finish = time.time()
+    # result_five_factor_2 = capm.five_factor_model(ticker2, market_index, start_date, end_date)
+    # result_six_factor_2 = capm.six_factor_model(ticker2, market_index, start_date, end_date)
+    # result_2_str = capm.multifactor_results_to_string(result_five_factor_2, include_factors=False)
+    # result_2_str_2 = capm.multifactor_results_to_string(result_six_factor_2, include_factors=False)
+    # second_finish = time.time()
 
     print("\n")
     print(result_1_str + "\n")
-    print(result_1_str_2 + "\n")
-    print(result_2_str + "\n")
-    print(result_2_str_2)
+    # print(result_1_str_2 + "\n")
+    # print(result_2_str + "\n")
+    # print(result_2_str_2)
     print(f"Time taken for first ticker: {round(first_finish - start, 2)} seconds")
-    print(f"Time taken for second ticker: {round(second_finish - first_finish, 2)} seconds")
+    # print(f"Time taken for second ticker: {round(second_finish - first_finish, 2)} seconds")
