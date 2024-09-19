@@ -441,12 +441,14 @@ class CAPMModel:
         expected_return = self.calculate_expected_return(risk_free_rate_latest, beta, market_return_avg)
         
         return {
-            'Ticker': ticker,
-            'Model_Name': 'CAPM',
-            'Beta': float(beta),
-            'Expected_Return': float(expected_return),
-            'Risk_Free_Rate': float(risk_free_rate_latest),
-            'Average_Market_Return': float(market_return_avg),
+            'ticker': ticker,
+            'model_name': 'CAPM',
+            'start_date': start_date,
+            'end_date': end_date,
+            'beta': float(beta),
+            'expected_return': float(expected_return),
+            'risk_free_rate': float(risk_free_rate_latest),
+            'average_market_return': float(market_return_avg),
         }
 
     def three_factor_model(self, ticker, market_index, start_date, end_date):
@@ -484,15 +486,17 @@ class CAPMModel:
         expected_return = risk_free_rates.iloc[-1] + betas['Market_Excess'] * factor_means['Market_Excess'] + \
                           betas['SMB'] * factor_means['SMB'] + betas['HML'] * factor_means['HML']
         return {
-            'Ticker': ticker,
-            'Model_Name': 'Fama-French Three-Factor',
-            'Betas': betas,
-            'Expected_Return': float(expected_return),
-            'Risk_Free_Rate': float(risk_free_rates.iloc[-1]),
-            'Market_Index': market_index,
-            'Average_Market_Return': float(data['Market'].mean()),
-            'Factor_Means': factor_means,
-            'P-Values': model.pvalues
+            'ticker': ticker,
+            'model_name': 'Fama-French Three-Factor',
+            'start_date': start_date,
+            'end_date': end_date,
+            'betas': betas,
+            'expected_return': float(expected_return),
+            'risk_free_rate': float(risk_free_rates.iloc[-1]),
+            'market_index': market_index,
+            'average_market_return': float(data['Market'].mean()),
+            'factor_means': factor_means,
+            'p_values': model.pvalues
         }
     
     def four_factor_model(self, ticker, market_index, start_date, end_date):
@@ -552,15 +556,17 @@ class CAPMModel:
                           betas['HML'] * factor_means['HML'] + \
                           betas['MOM'] * factor_means['MOM']
         return {
-            'Ticker': ticker,
-            'Model_Name': 'Carhart Four-Factor',
-            'Betas': betas,
-            'Expected_Return': float(expected_return),
-            'Risk_Free_Rate': float(risk_free_rates.iloc[-1]),
-            'Market_Index': market_index,
-            'Average_Market_Return': float(data['Market'].mean()),
-            'Factor_Means': factor_means,
-            'P-Values': model.pvalues
+            'ticker': ticker,
+            'model_name': 'Carhart Four-Factor',
+            'start_date': start_date,
+            'end_date': end_date,
+            'betas': betas,
+            'expected_return': float(expected_return),
+            'risk_free_rate': float(risk_free_rates.iloc[-1]),
+            'market_index': market_index,
+            'average_market_return': float(data['Market'].mean()),
+            'factor_means': factor_means,
+            'p_values': model.pvalues
         }
     
     def five_factor_model(self, ticker, market_index, start_date, end_date):
@@ -612,15 +618,17 @@ class CAPMModel:
         factor_means = data[['Market_Excess', 'SMB', 'HML', 'RMW', 'CMA']].mean()
         expected_return = self.calculate_expected_return(risk_free_rates.iloc[-1], betas, factor_means)
         return {
-            'Ticker': ticker,
-            'Model_Name': 'Fama-French Five-Factor',
-            'Betas': betas,
-            'Expected_Return': float(expected_return),
-            'Risk_Free_Rate': float(risk_free_rates.iloc[-1]),
-            'Market_Index': market_index,
-            'Average_Market_Return': float(data['Market'].mean()),
-            'Factor_Means': factor_means,
-            'P-Values': model.pvalues
+            'ticker': ticker,
+            'model_name': 'Fama-French Five-Factor',
+            'start_date': start_date,
+            'end_date': end_date,
+            'betas': betas,
+            'expected_return': float(expected_return),
+            'risk_free_rate': float(risk_free_rates.iloc[-1]),
+            'market_index': market_index,
+            'average_market_return': float(data['Market'].mean()),
+            'factor_means': factor_means,
+            'p_values': model.pvalues
         }
 
     def six_factor_model(self, ticker, market_index, start_date, end_date):
@@ -688,30 +696,32 @@ class CAPMModel:
         factor_means = data[['Market_Excess', 'SMB', 'HML', 'RMW', 'CMA', 'MOM']].mean()
         expected_return = self.calculate_expected_return(risk_free_rates.iloc[-1], betas, factor_means)
         return {
-            'Ticker': ticker,
-            'Model_Name': 'Fama-French Six-Factor',
-            'Betas': betas,
-            'Expected_Return': float(expected_return),
-            'Risk_Free_Rate': float(risk_free_rates.iloc[-1]),
-            'Market_Index': market_index,
-            'Average_Market_Return': float(data['Market'].mean()),
-            'Factor_Means': factor_means,
-            'P-Values': model.pvalues
+            'ticker': ticker,
+            'model_name': 'Fama-French Six-Factor',
+            'start_date': start_date,
+            'end_date': end_date,
+            'betas': betas,
+            'expected_return': float(expected_return),
+            'risk_free_rate': float(risk_free_rates.iloc[-1]),
+            'market_index': market_index,
+            'average_market_return': float(data['Market'].mean()),
+            'factor_means': factor_means,
+            'p_values': model.pvalues
         }
     
     def multifactor_results_to_string(self, results, include_factors=False):
-        string = f"{len(list(results['Betas'].items()))-1}-Factor Model Results for {results['Ticker']}:\n"
-        string += f"Expected Return: {round(results['Expected_Return'] * 100 * 252, 4)}%\n"
-        string += f"Average Market Return ({results['Market_Index']}): {round(results['Average_Market_Return'] * 100 * 252, 4)}%\n"
-        string += f"Risk-Free Rate: {round(results['Risk_Free_Rate'] * 100 * 252, 4)}%\n"
+        string = f"{len(list(results['betas'].items()))-1}-Factor Model Results for {results['ticker']}:\n"
+        string += f"Expected Return: {round(results['expected_return'] * 100 * 252, 4)}%\n"
+        string += f"Average Market Return ({results['market_index']}): {round(results['average_market_return'] * 100 * 252, 4)}%\n"
+        string += f"Risk-Free Rate: {round(results['risk_free_rate'] * 100 * 252, 4)}%\n"
 
         for factor, value in results.items():
-            if factor == 'Betas':
+            if factor == 'betas':
                 string += "\nBetas:\n"
                 for factor, beta in value.items():
                     if factor != 'const':
-                        string += f"  {factor}: {round(beta, 4)}, p: {round(results['P-Values'][factor],12)}\n"
-            elif factor == 'Factor_Means' and include_factors:
+                        string += f"  {factor}: {round(beta, 4)}, p: {round(results['p_values'][factor],12)}\n"
+            elif factor == 'factor_means' and include_factors:
                 string += "\nFactor Means (Annualized):\n"
                 for factor, mean in value.items():
                     string += f"  {factor}: {round(mean * 100 * 252, 4)}%\n"
@@ -727,8 +737,10 @@ if __name__ == '__main__':
     capm = CAPMModel(ticker=ticker, fred_api_key=os.getenv('FRED_API_KEY'), db_interface=db_interface)
     market_index = '^GSPC' # S&P 500
     # market_index = "^IXIC" # NASDAQ
-    start_date = datetime.datetime(2018, 1, 1)
+    # start_date = datetime.datetime(2014, 1, 1)
     end_date = datetime.datetime.now() - datetime.timedelta(days=1)
+    _days = 10 * 365
+    start_date = end_date - datetime.timedelta(days=_days)
     
     import time
     start = time.time()
@@ -737,14 +749,14 @@ if __name__ == '__main__':
     # result_four_factor = capm.four_factor_model(ticker, market_index, start_date, end_date)
     result_five_factor = capm.five_factor_model(ticker, market_index, start_date, end_date)
     result_six_factor = capm.six_factor_model(ticker, market_index, start_date, end_date)
-    result_1_str = capm.multifactor_results_to_string(result_five_factor, include_factors=True)
-    result_1_str_2 = capm.multifactor_results_to_string(result_six_factor, include_factors=True)
+    result_1_str = capm.multifactor_results_to_string(result_five_factor, include_factors=False)
+    result_1_str_2 = capm.multifactor_results_to_string(result_six_factor, include_factors=False)
     first_finish = time.time()
 
     result_five_factor_2 = capm.five_factor_model(ticker2, market_index, start_date, end_date)
     result_six_factor_2 = capm.six_factor_model(ticker2, market_index, start_date, end_date)
-    result_2_str = capm.multifactor_results_to_string(result_five_factor_2, include_factors=True)
-    result_2_str_2 = capm.multifactor_results_to_string(result_six_factor_2, include_factors=True)
+    result_2_str = capm.multifactor_results_to_string(result_five_factor_2, include_factors=False)
+    result_2_str_2 = capm.multifactor_results_to_string(result_six_factor_2, include_factors=False)
     second_finish = time.time()
 
     print("\n")
