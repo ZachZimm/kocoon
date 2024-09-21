@@ -58,8 +58,8 @@ def get_price_history(period: str, ticker: str):
     data: list = db_interface.query_stock_history(ticker=ticker.upper(), period_type=period, start_date='1900-01-01')
     return data
 
-@app.get("/api/multifactor_model/{ticker}/{years}y/{num_factors}")
-def get_multifactor_model(ticker: str, years: int, num_factors: int):
+@app.get("/api/multifactor_model/{years}y/{ticker}/{num_factors}")
+def get_multifactor_model(years: int, ticker: str, num_factors: int):
     # if db_interface.verify_multifactor_model_input(ticker, years, num_factors) == False:
     #     return {"error": "Invalid input"}
     # TODO: Implement input verification for multifactor model
