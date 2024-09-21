@@ -58,6 +58,15 @@ def get_price_history(period: str, ticker: str):
     data: list = db_interface.query_stock_history(ticker=ticker.upper(), period_type=period, start_date='1900-01-01')
     return data
 
+@app.get("/api/multifactor_model/{ticker}/{years}y/{num_factors}")
+def get_multifactor_model(ticker: str, years: int, num_factors: int):
+    # if db_interface.verify_multifactor_model_input(ticker, years, num_factors) == False:
+    #     return {"error": "Invalid input"}
+    # TODO: Implement input verification for multifactor model
+    # for now it just returns an empty dict if the input is invalid
+    data: list = db_interface.query_multifactor_model(ticker=ticker.upper(), years=years, num_factors=num_factors)
+    return data
+
 @app.get("/api/tickers")
 def get_all_tickers() -> list:
     return db_interface.get_all_tickers()
@@ -84,6 +93,9 @@ if __name__ == '__main__':
 
             data = db_interface.query(ticker=ticker, period_type=period_type, report_type=report_type)
             print(json.dumps(data, indent=2))
+        elif sys.argv[1] in ['test', '--test', '-t']:
+            get_multifactor_model('AAPL', years=10, factors=5)
+
     # Or if there are no arguments, run the server for the API 
     else:
         uvicorn.run(app, host="0.0.0.0", port=5090)

@@ -145,6 +145,25 @@ class DBInterface:
         else:
             print("No data found for any tickers.")
             return pd.DataFrame()  # Return empty dataframe
+    
+    def query_multifactor_model(self, ticker='AAPL', years=10, num_factors=5):
+        # TODO implement an input verification function
+        # Returns the JSON object stored in the database
+        cursor = self.conn.cursor()
+        table_name = f"{ticker}_{years}y_{num_factors}_factor_model_summary"
+        sql_string = f'SELECT * FROM "{table_name}"'
+        try:
+            cursor.execute(sql_string)
+            data = cursor.fetchall()
+            if data:
+                model_data = data[-1][-1]
+            else:   
+                model_data = {}
+        except psycopg2.errors.UndefinedTable:
+            print(f"Table {table_name} does not exist.")
+            model_data = {}
+        cursor.close()
+        return model_data
 
     def push_multifactor_model_summary(self, results: dict):
         cursor = self.conn.cursor()

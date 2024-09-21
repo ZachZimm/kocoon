@@ -632,6 +632,9 @@ class CAPMModel:
         }
 
     def six_factor_model(self, ticker, market_index, start_date, end_date):
+        # Currently this function raises an error if the 5-factor model has not run first
+        # TODO fix that
+
         # Fetch asset and market data
         asset_prices, market_prices = self.fetch_asset_market_data(ticker, market_index, start_date, end_date)
         asset_returns = asset_prices.pct_change(fill_method=None)
