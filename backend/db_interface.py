@@ -1,6 +1,8 @@
 import os
+import json
 import pandas as pd
 import psycopg2
+from psycopg2 import sql
 from datetime import datetime, date
 
 def check_env_vars() -> bool:
@@ -124,10 +126,6 @@ class DBInterface:
         if dfs:
             # Concatenate along columns
             combined_df = pd.concat(dfs, axis=1)
-            # Check for duplicate indices
-            if combined_df.index.duplicated().any():
-                # Remove duplicate indices
-                combined_df = combined_df[~combined_df.index.duplicated(keep='first')]
 
             # check for duplicate labels
             if combined_df.columns.duplicated().any():
@@ -147,7 +145,61 @@ class DBInterface:
         else:
             print("No data found for any tickers.")
             return pd.DataFrame()  # Return empty dataframe
-
+    def push_multifactor_model_summary(self, results: dict):
+        cursor = self.conn.cursor()
+        try:
+            # Extract ticker
+            ticker = results['ticker']
+            # Extract num_factors (exclude 'const' if present)
+            num_factors = len([beta for beta in results['betas'] if beta != 'const'])
+            # Parse start_date and end_date
+            if isinstance(results['start_date'], str):
+                start_date = datetime.strptime(results['start_date'], '%Y-%m-%d')
+            else:
+                start_date = results['start_date']
+            if isinstance(results['end_date'], str):
+                end_date = datetime.strptime(results['end_date'], '%Y-%m-%d')
+            else:
+                end_date = results['end_date']
+            # Compute num_years
+            num_years = round((end_date - start_date).days / 365)
+            # Ensure at least 1 year
+            num_years = max(num_years, 1)
+            # Create table name
+            table_name = f"{ticker}_{num_years}y_{num_factors}_factor_model_summary"
+            # Ensure that all types are native Python types
+            # Ensure start_date and end_date are strings
+            if isinstance(results['start_date'], datetime):
+                results['start_date'] = results['start_date'].strftime('%Y-%m-%d')
+            if isinstance(results['end_date'], datetime):
+                results['end_date'] = results['end_date'].strftime('%Y-%m-%d')
+            # cast factor_means and p_value items to float
+            for factor in results['betas']:
+                results['factor_means'][factor] = float(results['factor_means'][factor])
+                results['p_values'][factor] = float(results['p_values'][factor])
+            # Create table if it doesn't exist
+            create_table_query = sql.SQL("""
+                CREATE TABLE IF NOT EXISTS {} (
+                    id SERIAL PRIMARY KEY,
+                    data JSONB
+                )
+            """).format(sql.Identifier(table_name))
+            cursor.execute(create_table_query)
+            self.conn.commit()
+            # Delete existing entries to overwrite previous data
+            delete_query = sql.SQL("DELETE FROM {}").format(sql.Identifier(table_name))
+            cursor.execute(delete_query)
+            # Insert new data
+            data_json = json.dumps(results)
+            insert_query = sql.SQL("INSERT INTO {} (data) VALUES (%s)").format(sql.Identifier(table_name))
+            cursor.execute(insert_query, [data_json])
+            self.conn.commit()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            self.conn.rollback()
+        finally:
+            cursor.close()
+            
     def get_all_tickers(self) -> list:
         cursor = self.conn.cursor()
         # Query to get distinct tickers from the financial_master table
