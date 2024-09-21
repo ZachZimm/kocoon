@@ -3,7 +3,7 @@ import json
 import pandas as pd
 import psycopg2
 from psycopg2 import sql
-from datetime import datetime, date
+from datetime import datetime
 
 def check_env_vars() -> bool:
     env_vars = ['DATABASE_HOST', 'DATABASE_USER', 'DATABASE_PASSWORD']
@@ -145,14 +145,13 @@ class DBInterface:
         else:
             print("No data found for any tickers.")
             return pd.DataFrame()  # Return empty dataframe
+
     def push_multifactor_model_summary(self, results: dict):
         cursor = self.conn.cursor()
         try:
-            # Extract ticker
             ticker = results['ticker']
-            # Extract num_factors (exclude 'const' if present)
-            num_factors = len([beta for beta in results['betas'] if beta != 'const'])
-            # Parse start_date and end_date
+            num_factors = len(results['betas']) - 1
+            # Parse start_date and end_date if they are strings
             if isinstance(results['start_date'], str):
                 start_date = datetime.strptime(results['start_date'], '%Y-%m-%d')
             else:
@@ -174,9 +173,15 @@ class DBInterface:
             if isinstance(results['end_date'], datetime):
                 results['end_date'] = results['end_date'].strftime('%Y-%m-%d')
             # cast factor_means and p_value items to float
-            for factor in results['betas']:
-                results['factor_means'][factor] = float(results['factor_means'][factor])
-                results['p_values'][factor] = float(results['p_values'][factor])
+            for factor in results['betas'].index:
+                if factor != 'const':
+                    results['factor_means'][factor] = float(results['factor_means'][factor])
+                    results['p_values'][factor] = float(results['p_values'][factor])
+            # Convert any field that is a series to a dict
+            for key in results:
+                if isinstance(results[key], pd.Series):
+                    results[key] = results[key].to_dict()
+            
             # Create table if it doesn't exist
             create_table_query = sql.SQL("""
                 CREATE TABLE IF NOT EXISTS {} (
