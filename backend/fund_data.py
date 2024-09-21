@@ -11,7 +11,7 @@ import os
 import re
 import time
 import numpy as np
-import python_usage
+import api_server
 
 load_dotenv()
 av_key = os.getenv('ALPHAVANTAGE_API_KEY')
@@ -532,7 +532,7 @@ if __name__ == "__main__":
     elif 'get_all_financials_data' in sys.argv:
         # We should really just ping the server for the tickers as this creates a wierd dependency on the relay server
         # Although, this does make for a tidy one-liner, and the environment already exists 
-        all_tickers = python_usage.get_all_tickers()
+        all_tickers = api_server.get_all_tickers()
         frequency_list = ['q', 'a']
         save_financials_loop(all_tickers, frequency_list)
     elif 'insiders' in sys.argv:
