@@ -4,8 +4,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 
+interface ChatDisplayProps {
+    fluxnoteUsername: string;
+}
 
-export function ChatDisplay() {
+export function ChatDisplay({fluxnoteUsername}: ChatDisplayProps) {
     const [badge1Message, setBadge1Message] = useState("Briefly tell me about the basics of investment risk.")
     const [badge2Message, setBadge2Message] = useState("How can I interpret a company's financial statements?")
     const [socket, setSocket] = useState<WebSocket | null>(null);
@@ -93,7 +96,7 @@ export function ChatDisplay() {
         // Connection opened
         ws.addEventListener('open', () => {
             console.log('WebSocket connection established.');
-            userLogin("test_user", ws);
+            userLogin(fluxnoteUsername, ws);
         });
         // Listen for messages
         ws.addEventListener('message', (event) => {
@@ -118,7 +121,7 @@ export function ChatDisplay() {
         return () => {
             ws.close();
         };
-      }, []);
+      }, [fluxnoteUsername]);
 
 return (
         <div className="flex flex-col h-full justify-items-center p-2">

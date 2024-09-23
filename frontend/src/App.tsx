@@ -61,7 +61,7 @@ function App() {
           className="justify-self-center h-full rounded-lg border">
             <ResizablePanel className='w-full'>
               {/* Chat Panel */}
-              <ChatDisplay />
+              <ChatDisplay fluxnoteUsername={userId + '-' + userName}/>
 
           </ResizablePanel>
             <ResizableHandle withHandle/>
