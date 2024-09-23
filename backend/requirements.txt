@@ -1,5 +1,8 @@
+authlib
+httpx
 psycopg2-binary
 fastapi
+itsdangerous
 uvicorn
 python-dotenv
 yahooquery

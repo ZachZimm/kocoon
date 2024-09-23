@@ -247,3 +247,37 @@ class DBInterface:
         if ticker not in self.all_tickers:
             return False
         return True
+    
+    def get_github_user(self, github_id):
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT * FROM github_users WHERE github_id = %s
+        """, (github_id,))
+        user = cursor.fetchone()
+        # remove email from user data
+        if user:
+            user = user[:-1]
+        return user
+
+    def push_github_user(self, github_id, username, email):
+        cursor = self.conn.cursor()
+        # Create table if it doesn't exist
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS github_users (
+                github_id BIGINT PRIMARY KEY,
+                username TEXT,
+                email TEXT
+            )
+        """)
+        try:
+            cursor.execute("""
+                INSERT INTO github_users (github_id, username, email)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (github_id) DO UPDATE
+                SET username = EXCLUDED.username, email = EXCLUDED.email;""", (github_id, username, email)
+                
+            )
+            self.conn.commit()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            self.conn.rollback()

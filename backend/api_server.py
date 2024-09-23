@@ -1,16 +1,31 @@
 # This file contains a FastAPI server that serves financial data from the PostgreSQL database
 # TODO: Consider some kind of authentication for the API, even if it's just a token in the header saved in the frontend code for now
-
+import os
 import sys
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import uvicorn
 from db_interface import DBInterface
 import json
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.responses import RedirectResponse
+from authlib.integrations.starlette_client import OAuth, OAuthError
 
+load_dotenv()
 app = FastAPI()
+oauth = OAuth()
+oauth.register(
+    name='github',
+    client_id=os.getenv('GITHUB_CLIENT_ID'),
+    client_secret=os.getenv('GITHUB_CLIENT_SECRET'),
+    access_token_url='https://github.com/login/oauth/access_token',
+    authorize_url='https://github.com/login/oauth/authorize',
+    api_base_url='https://api.github.com/',
+    client_kwargs={'scope': 'user:email'},
+    authorize_state=os.getenv('AUTH_SECRET_KEY')
+)
 origins = [ "http://192.168.1.193:5173",
             "http://localhost:5173",
             "http://host.zzimm.com:5173",
@@ -23,8 +38,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(
+    SessionMiddleware, secret_key=os.getenv('AUTH_SECRET_KEY')
+)
 
-load_dotenv()
 db_interface = DBInterface() # Consider a different name for this object as it is the same as the file name
 
 @app.get("/api/balance_sheet/{period_type}/{ticker}")
@@ -68,8 +85,43 @@ def get_multifactor_model(years: int, ticker: str, num_factors: int):
     return data
 
 @app.get("/api/tickers")
-def get_all_tickers() -> list:
+async def get_all_tickers() -> list:
     return db_interface.get_all_tickers()
+
+@app.get('/api/github_login')
+async def github_login(request: Request):
+    redirect_uri = request.url_for('github_auth')
+    return await oauth.github.authorize_redirect(request, redirect_uri)
+
+@app.get('/api/auth/github_callback')
+async def github_auth(request: Request):
+    # try to get the token from the request
+    try:
+        token = await oauth.github.authorize_access_token(request)
+    except OAuthError as e:
+        print(f"OAuthError:\n{e}")
+        return RedirectResponse(url='/')
+    
+    user_info = await oauth.github.get('user', token=token)
+    user_data = user_info.json()
+
+    github_id = user_data['id'] 
+    username = user_data['login']
+    email = user_data['email']
+
+    # save or update user in the database
+    db_interface.push_github_user(github_id, username, email)
+    
+    # redirect to the home page after login
+    response = RedirectResponse(url='/')
+    # add "user_id={github_id}" to the cookie
+    response.set_cookie(key='user_id', value=str(github_id))
+
+    return response
+
+@app.get('/api/user/{user_id}')
+def get_user(user_id: int):
+    return db_interface.get_github_user(user_id)
 
 # period types are 'q' for quarterly and 'a' for annual
 # report types are 'balance_sheet', 'income_statement', 'cash_flow'
