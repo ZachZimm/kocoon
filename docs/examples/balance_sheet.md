@@ -1,6 +1,7 @@
 retrieved with `curl https://host.zzimm.com/api/balance_sheet/q/AAPL`
 all fields are of type string
 
+```
 [
     { ... } ,
     {
@@ -106,3 +107,4 @@ all fields are of type string
     "LongTermCapitalLeaseObligation": "NaN"
   }
 ]
+```
