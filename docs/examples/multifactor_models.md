@@ -10,7 +10,7 @@ Schema:
   "p_values": dict{ string : float },
   "model_name": string,
   "start_date": string,
-  "factor_means": { dict : float },
+  "factor_means": dict{ string : float },
   "market_index": string,
   "risk_free_rate": float,
   "expected_return": float,

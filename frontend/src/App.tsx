@@ -12,10 +12,13 @@ import { ChatDisplay } from './components/chat-display'
 import { FinancialsDisplay } from './components/financials-display'
 import GithubLoginButton from './components/github-login-button'
 import ModeToggle from './components/ui/mode-toggle'
+import { Button } from './components/ui/button'
 
 function App() {
   const [userName, setUserName] = useState('not logged in')
   const [userId, setUserId] = useState('')
+  const [displayName1, setDisplayName1] = useState('chat')
+  const [displayName2, setDisplayName2] = useState('financials')
 
   useEffect(() => {
     // Check if user is logged in
@@ -48,8 +51,15 @@ function App() {
           <div className="flex flex-row flex-1 py-1 px-2">
             <h2 className='font-semibold text-lg justify-self-center pb-4'>Kocoon</h2>
             <div className='flex-1 justify-end flex gap-2'>
-              <span className='font-semibold'>{userName}</span>
-              <GithubLoginButton />
+              <GithubLoginButton username={userName} userId={userId}/>
+              <div className='flex gap-1'>
+                <Button onClick={() => setDisplayName1(displayName1 === 'chat' ? 'financials' : 'chat')} variant='outline'>
+                  Switch left display
+                </Button>
+                <Button onClick={() => setDisplayName2(displayName2 === 'chat' ? 'financials' : 'chat')} variant='outline'>
+                  Switch right display
+                </Button>
+              </div>
               <ModeToggle />
             </div>
           </div>
@@ -60,15 +70,16 @@ function App() {
           <ResizablePanelGroup direction="horizontal"
           className="justify-self-center h-full rounded-lg border">
             <ResizablePanel className='w-full'>
-              {/* Chat Panel */}
-              <ChatDisplay fluxnoteUsername={userId + '-' + userName}/>
+              {/* Left Panel - Chat Panel */}
+              { (displayName1 === 'chat') && <ChatDisplay fluxnoteUsername={userId + '-' + userName}/> }
+              { (displayName1 === 'financials') && <FinancialsDisplay /> }
 
           </ResizablePanel>
             <ResizableHandle withHandle/>
             <ResizablePanel defaultSize={60} className='w-full'>
-              {/* Secondary panel */}
-              <FinancialsDisplay />
-
+              {/* Right Panel - Financials */}
+              { (displayName2 === 'financials' && <FinancialsDisplay />) }
+              { (displayName2 === 'chat' && <ChatDisplay fluxnoteUsername={userId + '-' + userName}/> ) }
             </ResizablePanel>
           </ResizablePanelGroup>
         </ResizablePanel>
