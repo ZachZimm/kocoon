@@ -17,11 +17,9 @@ def generate_multifactor_models(ticker_list=None):
     tickers_complete = 0
     failed_tickers = []
     tickers_total = len(ticker_list)
-    years = [5, 10]
+    years = [10, 5]
     market_index = "^GSPC" # S&P 500 index
-    five_factor_model = CAPMModel(fred_api_key=os.getenv('FRED_API_KEY'), db_interface=db_interface)
-    six_factor_model = CAPMModel(fred_api_key=os.getenv('FRED_API_KEY'), db_interface=db_interface)
-
+    model = CAPMModel(fred_api_key=os.getenv('FRED_API_KEY'), db_interface=db_interface)
     print(f"Generating multifactor models for {tickers_total} tickers")
     for year in years:
         end_date = datetime.datetime.now()
@@ -29,8 +27,8 @@ def generate_multifactor_models(ticker_list=None):
         for ticker in ticker_list:
             # Generate the five and six factor models
             try:
-                five_factor_result = five_factor_model.five_factor_model(ticker, market_index, start_date, end_date)
-                six_factor_result = six_factor_model.six_factor_model(ticker, market_index, start_date, end_date)
+                five_factor_result = model.five_factor_model(ticker, market_index, start_date, end_date)
+                six_factor_result = model.six_factor_model(ticker, market_index, start_date, end_date)
 
                 # Push the results to the database
                 for result in [five_factor_result, six_factor_result]:

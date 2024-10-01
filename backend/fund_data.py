@@ -178,7 +178,6 @@ def update_financials_yq(ticker='AAPL', frequency_list=['q']):
                 merged_data = merge_close_ttm_rows(merged_data)
                 merged_data.to_csv(file_path)
 
-
                 print(f'retrieved {frequency_word} {file_type} for {ticker}')
                 return False
 
@@ -197,7 +196,7 @@ def update_financials_yq(ticker='AAPL', frequency_list=['q']):
             
     return 0
 
-def get_insider_reports(): # This function needs to be fixed and tested without the y_user and y_pass
+def get_insider_reports(): # This function needs to be fixed and tested without the y_user and y_pass - It doesn't work without a premium account
     r = None
     if y_user == '' or y_pass == '':
        r = yq.Research()
