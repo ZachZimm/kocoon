@@ -7,7 +7,7 @@ sys.path.append("..")
 from db_interface import DBInterface
 from capm_model import CAPMModel
 
-
+# TODO Implement a multiprocessing version of this script to speed up the process as it is currently very slow
 def generate_multifactor_models(ticker_list=None):
     # Generate multifactor models for all tickers and push them to the database
     db_interface = DBInterface()
@@ -33,6 +33,7 @@ def generate_multifactor_models(ticker_list=None):
                 if result:
                     db_interface.push_multifactor_model_summary(result)
             
+            tickers_complete += 1
             print(f"{round((tickers_complete / tickers_total) * 100, 2)}% complete")
         
         
