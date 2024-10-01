@@ -1,0 +1,45 @@
+import sys
+import os
+import datetime
+from dotenv import load_dotenv
+
+sys.path.append("..")
+from db_interface import DBInterface
+from capm_model import CAPMModel
+
+
+def generate_multifactor_models(ticker_list=None):
+    # Generate multifactor models for all tickers and push them to the database
+    db_interface = DBInterface()
+
+    if not ticker_list:
+        ticker_list = db_interface.get_all_tickers()
+    tickers_complete = 0
+    tickers_total = len(ticker_list)
+    years = [5, 10]
+    market_index = "^GSPC" # S&P 500 index
+    model = CAPMModel(fred_api_key=os.getenv('FRED_API_KEY'), db_interface=db_interface)
+    print(f"Generating multifactor models for {tickers_total} tickers")
+    for year in years:
+        end_date = datetime.datetime.now()
+        start_date = end_date - datetime.timedelta(days=365 * year)
+        for ticker in ticker_list:
+            # Generate the five and six factor models
+            five_factor_result = model.five_factor_model(ticker, market_index, start_date, end_date)
+            six_factor_result = model.six_factor_model(ticker, market_index, start_date, end_date)
+
+            # Push the results to the database
+            for result in [five_factor_result, six_factor_result]:
+                if result:
+                    db_interface.push_multifactor_model_summary(result)
+            
+            print(f"{round((tickers_complete / tickers_total) * 100, 2)}% complete")
+        
+        
+
+if __name__ == '__main__':
+    load_dotenv()
+    import time
+    start = time.time()
+    generate_multifactor_models()
+    print(f"Time elapsed: {round(time.time() - start, 2)} seconds")

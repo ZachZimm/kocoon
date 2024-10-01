@@ -11,8 +11,7 @@ from db_interface import DBInterface
 from dateutil.relativedelta import relativedelta
 
 class CAPMModel:
-    def __init__(self, ticker, fred_api_key, db_interface: DBInterface):
-        self.ticker = ticker
+    def __init__(self, fred_api_key, db_interface: DBInterface):
         self.db_interface = db_interface
         self.fred_api_key = fred_api_key
         self.fred = Fred(api_key=fred_api_key)
@@ -737,7 +736,7 @@ if __name__ == '__main__':
     db_interface = DBInterface()
     ticker = input("Enter a ticker: ")
     ticker2 = input("Enter a second ticker: ")
-    capm = CAPMModel(ticker=ticker, fred_api_key=os.getenv('FRED_API_KEY'), db_interface=db_interface)
+    capm = CAPMModel(fred_api_key=os.getenv('FRED_API_KEY'), db_interface=db_interface)
     market_index = '^GSPC' # S&P 500
     # market_index = "^IXIC" # NASDAQ
     # start_date = datetime.datetime(2014, 1, 1)

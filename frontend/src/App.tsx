@@ -19,6 +19,7 @@ function App() {
   const [userId, setUserId] = useState('')
   const [displayName1, setDisplayName1] = useState('chat')
   const [displayName2, setDisplayName2] = useState('financials')
+  const [displayName3, setDisplayName3] = useState('financials') // Need to create a third display
 
   useEffect(() => {
     // Check if user is logged in
@@ -49,9 +50,8 @@ function App() {
           {/* Header 
                 This will eventually go into a seperate component8*/}
           <div className="flex flex-row flex-1 py-1 px-2">
-            <h2 className='font-semibold text-lg justify-self-center pb-4'>Kocoon</h2>
-            <div className='flex-1 justify-end flex gap-2'>
-              <GithubLoginButton username={userName} userId={userId}/>
+            <div className='gap-1 p-0'>
+              <h2 className='font-semibold text-lg justify-self-center'>Kocoon</h2>
               <div className='flex gap-1'>
                 <Button onClick={() => setDisplayName1(displayName1 === 'chat' ? 'financials' : 'chat')} variant='outline'>
                   Switch left display
@@ -59,7 +59,15 @@ function App() {
                 <Button onClick={() => setDisplayName2(displayName2 === 'chat' ? 'financials' : 'chat')} variant='outline'>
                   Switch right display
                 </Button>
+                <Button onClick={() => setDisplayName3(displayName3 === 'chat' ? 'financials' : 'chat')} variant='outline'>
+                  Switch bottom display
+                </Button>
               </div>
+            </div>
+
+            <div className='flex-1 justify-end flex gap-2'>
+              <GithubLoginButton username={userName} userId={userId}/>
+              
               <ModeToggle />
             </div>
           </div>
@@ -86,7 +94,8 @@ function App() {
         <ResizableHandle withHandle/>
         <ResizablePanel defaultSize={0} className='w-full'>
           <div className="flex flex-col flex-1 py-1 px-2">
-            <span className='font-semibold'>Nothing here yet...</span>
+            { (displayName3 === 'financials' && <FinancialsDisplay />) }
+            { (displayName3 === 'chat' && <ChatDisplay fluxnoteUsername={userId + '-' + userName}/> ) }
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
