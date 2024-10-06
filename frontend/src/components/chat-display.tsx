@@ -92,7 +92,6 @@ export function ChatDisplay({fluxnoteUsername}: ChatDisplayProps) {
   useEffect(() => {
         // Create WebSocket connection.
         const ws = new WebSocket('wss://host.zzimm.com/ws');
-
         // Connection opened
         ws.addEventListener('open', () => {
             console.log('WebSocket connection established.');
@@ -100,8 +99,6 @@ export function ChatDisplay({fluxnoteUsername}: ChatDisplayProps) {
         });
         // Listen for messages
         ws.addEventListener('message', (event) => {
-
-            // You can also append the message to the chat log here if needed
             const message = JSON.parse(event.data);
             if (message.mode.includes("chat streaming")) {
                 if (message.mode.includes("finished")) {
@@ -115,7 +112,6 @@ export function ChatDisplay({fluxnoteUsername}: ChatDisplayProps) {
               console.log('Message from server ', event.data);
             }
         });
-        // Save the WebSocket instance to state
         setSocket(ws);
         // Cleanup on component unmount
         return () => {

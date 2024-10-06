@@ -48,4 +48,4 @@ if __name__ == '__main__':
     import time
     start = time.time()
     generate_multifactor_models()
-    print(f"Time elapsed: {round(time.time() - start, 2)} seconds")
+    print(f"Time elapsed: {round(time.time() - start, 2) / 60 / 60} hours")

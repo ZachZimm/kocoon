@@ -48,10 +48,11 @@ function App() {
         <ResizablePanel defaultSize={6} className='w-full'>
 
           {/* Header 
-                This will eventually go into a seperate component8*/}
+                This will eventually go into a seperate component */}
           <div className="flex flex-row flex-1 py-1 px-2">
             <div className='gap-1 p-0'>
               <h2 className='font-semibold text-lg justify-self-center'>Kocoon</h2>
+              {/* This div should be some kind of popover / hover menu component */}
               <div className='flex gap-1'>
                 <Button onClick={() => setDisplayName1(displayName1 === 'chat' ? 'financials' : 'chat')} variant='outline'>
                   Switch left display
@@ -64,10 +65,9 @@ function App() {
                 </Button>
               </div>
             </div>
-
+            { /* TODO This div should be made into a login component once we add more login methods such as other auth providers, NOSTR, username / pass, blockchain, etc... */}
             <div className='flex-1 justify-end flex gap-2'>
               <GithubLoginButton username={userName} userId={userId}/>
-              
               <ModeToggle />
             </div>
           </div>
