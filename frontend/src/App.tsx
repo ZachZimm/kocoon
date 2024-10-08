@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/resizable"
 import { ChatDisplay } from './components/chat-display'
 import { FinancialsDisplay } from './components/financials-display'
+import {ManagePortfolioDisplay} from './components/manage-portfolio-display'
 import GithubLoginButton from './components/github-login-button'
 import ModeToggle from './components/ui/mode-toggle'
 import { Button } from './components/ui/button'
@@ -19,7 +20,7 @@ function App() {
   const [userId, setUserId] = useState('')
   const [displayName1, setDisplayName1] = useState('chat')
   const [displayName2, setDisplayName2] = useState('financials')
-  const [displayName3, setDisplayName3] = useState('financials') // Need to create a third display
+  const [displayName3, setDisplayName3] = useState('portfolio') // Need to create a third display
 
   useEffect(() => {
     // Check if user is logged in
@@ -60,7 +61,7 @@ function App() {
                 <Button onClick={() => setDisplayName2(displayName2 === 'chat' ? 'financials' : 'chat')} variant='outline'>
                   Switch right display
                 </Button>
-                <Button onClick={() => setDisplayName3(displayName3 === 'chat' ? 'financials' : 'chat')} variant='outline'>
+                <Button onClick={() => setDisplayName3(displayName3 === 'portfolio' ? 'financials' : 'portfolio')} variant='outline'>
                   Switch bottom display
                 </Button>
               </div>
@@ -95,7 +96,7 @@ function App() {
         <ResizablePanel defaultSize={0} className='w-full'>
           <div className="flex flex-col flex-1 py-1 px-2">
             { (displayName3 === 'financials' && <FinancialsDisplay />) }
-            { (displayName3 === 'chat' && <ChatDisplay fluxnoteUsername={userId + '-' + userName}/> ) }
+            { (displayName3 === 'portfolio' && <ManagePortfolioDisplay user_id={userId}/> ) }
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
