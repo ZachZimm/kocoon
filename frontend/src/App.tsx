@@ -96,7 +96,7 @@ function App() {
         <ResizablePanel defaultSize={0} className='w-full'>
           <div className="flex flex-col flex-1 py-1 px-2">
             { (displayName3 === 'financials' && <FinancialsDisplay />) }
-            { (displayName3 === 'portfolio' && <ManagePortfolioDisplay user_id={userId}/> ) }
+            { (displayName3 === 'portfolio' && <ManagePortfolioDisplay user_name={userName} user_id={userId}/> ) }
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

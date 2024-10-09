@@ -124,7 +124,7 @@ def get_user(user_id: int):
     return db_interface.get_github_user(user_id)
 
 # period types are 'q' for quarterly and 'a' for annual
-# report types are 'balance_sheet', 'income_statement', 'cash_flow'
+# report types are 'balance_sheet', 'income', 'cash_flow'
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
@@ -139,7 +139,7 @@ if __name__ == '__main__':
             if period_type_in.strip() in ['q', 'a']:
                 period_type = period_type_in
             report_type = "balance_sheet"
-            report_type_in = input('Enter a report type (balance_sheet, income_statement, cash_flow, default balance_sheet): ')
+            report_type_in = input('Enter a report type (balance_sheet, income, cash_flow, default balance_sheet): ')
             if report_type_in.strip() in ['balance_sheet', 'income', 'cash_flow']:
                 report_type = report_type_in
 
